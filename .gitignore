@@ -1,0 +1,10 @@
+# Files
+**/bazel*
+
+# Directories
+data/
+**/cmake-build-debug/
+**/bazel*/
+
+# IDE
+.idea/
