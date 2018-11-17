@@ -8,7 +8,7 @@ int main() {
 
     utils::vprint(feature_shape);
 
-    std::cout << *dataset.features();
+    std::cout << *dataset.labels() << std::endl;
 
     return 0;
 }

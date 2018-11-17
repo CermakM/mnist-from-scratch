@@ -132,18 +132,16 @@ std::vector<char> images::mnist::read_data_file(const std::string &fpath, const 
         throw std::runtime_error("Magic number values do not match.");
     }
 
-    std::vector<char> labels((size_t) n_images);
+    in_file.seekg(start_b, in_file.beg);
 
-    in_file.seekg(start_b);
+    std::vector<char> data_vec;
+    data_vec.reserve(n_images);
 
-    std::istream_iterator<char> eos;
-    std::istream_iterator<char> data_it (in_file);
-
-    while (data_it != eos) {
-        labels.push_back(*data_it++);
-    }
+    std::copy( std::istreambuf_iterator<char>(in_file),
+               std::istreambuf_iterator<char>(),
+               std::back_inserter(data_vec) );
 
     in_file.close();
 
-    return labels;
+    return data_vec;
 }
