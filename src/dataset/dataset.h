@@ -136,7 +136,7 @@ namespace images {
          * @param fpath  path to the file
          * @return  vector of pixels as characters (needs to be further reshaped)
          */
-        std::vector<char> read_image_file(const std::string &fpath);
+        std::vector<u_char > read_image_file(const std::string &fpath);
 
 
         /**
@@ -145,7 +145,7 @@ namespace images {
          * @param fpath  path to the file
          * @return  vector of labels as characters
          */
-        std::vector<char> read_label_file(const std::string &fpath);
+        std::vector<u_char > read_label_file(const std::string &fpath);
 
 
         /**
@@ -155,7 +155,7 @@ namespace images {
          * @param start_b  data start byte
          * @return  1d vector of characters read from the data file
          */
-        std::vector<char> read_data_file(const std::string &fpath, const size_t& start_b = 8);
+        std::vector<u_char > read_data_file(const std::string &fpath, const size_t& start_b = 8);
     }
 }
 

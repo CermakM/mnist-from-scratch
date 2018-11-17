@@ -46,11 +46,11 @@ images::mnist::MNISTDataset images::mnist::load_dataset(const std::string &data_
     bfs::path test_labels_path = bfs::path(data_dir) / images::mnist::TEST_LABELS;
 
     // read data from files
-    std::vector<char> feature_vec = images::mnist::read_image_file(train_images_path.string());
-    std::vector<char> label_vec = images::mnist::read_image_file(train_images_path.string());
+    std::vector<u_char > feature_vec = images::mnist::read_image_file(train_images_path.string());
+    std::vector<u_char > label_vec = images::mnist::read_image_file(train_images_path.string());
 
-    std::vector<char> test_features = images::mnist::read_label_file(test_images_path.string());
-    std::vector<char> test_labels = images::mnist::read_label_file(test_images_path.string());
+    std::vector<u_char > test_features = images::mnist::read_label_file(test_images_path.string());
+    std::vector<u_char > test_labels = images::mnist::read_label_file(test_images_path.string());
 
     // concatenate
     std::move(test_features.begin(), test_features.end(), std::back_inserter(feature_vec));
@@ -71,7 +71,7 @@ void images::mnist::download(const std::string &out_dir) {
 }
 
 
-std::vector<char> images::mnist::read_image_file(const std::string &fpath) {
+std::vector<u_char > images::mnist::read_image_file(const std::string &fpath) {
 
     /*
      * The data are stored in the following way:
@@ -85,13 +85,13 @@ std::vector<char> images::mnist::read_image_file(const std::string &fpath) {
      * 0017     unsigned byte   ??               pixel
      */
 
-    std::vector<char> features = images::mnist::read_data_file(fpath, 16);
+    std::vector<u_char > features = images::mnist::read_data_file(fpath, 16);
 
     return features;
 }
 
 
-std::vector<char> images::mnist::read_label_file(const std::string &fpath) {
+std::vector<u_char > images::mnist::read_label_file(const std::string &fpath) {
 
     /*
      * The data are stored in the following way:
@@ -103,13 +103,13 @@ std::vector<char> images::mnist::read_label_file(const std::string &fpath) {
      * 0009     unsigned byte   ??               label
      */
 
-    std::vector<char> labels = images::mnist::read_data_file(fpath, 8);
+    std::vector<u_char> labels = images::mnist::read_data_file(fpath, 8);
 
     return labels;
 }
 
 
-std::vector<char> images::mnist::read_data_file(const std::string &fpath, const size_t& start_b) {
+std::vector<u_char > images::mnist::read_data_file(const std::string &fpath, const size_t& start_b) {
 
     std::ifstream in_file (fpath.c_str(), std::ios_base::in | std::ios_base::binary);
 
@@ -134,12 +134,16 @@ std::vector<char> images::mnist::read_data_file(const std::string &fpath, const 
 
     in_file.seekg(start_b, in_file.beg);
 
-    std::vector<char> data_vec;
+    std::vector<u_char > data_vec;
     data_vec.reserve(n_images);
 
-    std::copy( std::istreambuf_iterator<char>(in_file),
-               std::istreambuf_iterator<char>(),
-               std::back_inserter(data_vec) );
+    std::istreambuf_iterator<char > it (in_file);
+    std::istreambuf_iterator<char > eos;
+
+    while (it != eos) {
+        u_char c = boost::endian::endian_reverse((u_char) *it++);
+        data_vec.push_back(c);
+    }
 
     in_file.close();
 

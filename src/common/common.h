@@ -24,6 +24,7 @@
 
 
 // boost
+#include "boost/endian/conversion.hpp"
 #include "boost/filesystem.hpp"
 #include "boost/format.hpp"
 
