@@ -75,6 +75,10 @@ namespace model {
         const auto& name() const { return this->_name; }
         const auto& shape() const { return this->_weights.shape(); }
         const auto& size() const { return this->_size; }
+
+        void set_input(bool val) { this->_is_input = val; this->_is_hidden = false; }
+        void set_output(bool val) { this->_is_output = val; this->_is_hidden = false; }
+
         tensor_t activate(const tensor_t &x);
     };
 
@@ -102,14 +106,17 @@ namespace model {
         explicit MNISTModel() = default;
         explicit MNISTModel(MNISTConfig& config);
 
+        const auto& is_built() const { return this->_is_built; }
+        const auto& is_fit() const { return this->_is_fit; }
+
         const std::vector<std::unique_ptr<Layer>>& layers() const {
             return this->_layers;
         }
 
         void add(Layer* layer);
 
-        void build();
-        void build(const MNISTConfig& build_config);
+        void compile();
+        void compile(const MNISTConfig &build_config);
 
         void fit(xt::xarray<double> features, xt::xarray<u_char> labels);
 

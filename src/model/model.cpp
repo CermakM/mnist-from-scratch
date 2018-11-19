@@ -54,18 +54,34 @@ model::MNISTModel::MNISTModel(model::MNISTConfig &config) {
 
 void model::MNISTModel::add(model::Layer* layer) {
 
-    if (!_layers.empty()) {
-
-        layer->previous = _layers.back().get();
-
-        // init weights
-        std::vector<size_t> shape = { layer->previous->size(), layer->size() };
-        layer->_weights = xt::random::randn<double>(shape);
-    }
-
     _layers.push_back(std::make_unique<Layer>(*layer));
 
 }
+
+void model::MNISTModel::compile() {
+
+    for (int i = 0; i < _layers.size(); i++) {
+
+        auto &layer = _layers[i];
+
+        if (i > 0) {
+            std::vector<size_t> shape = {_layers[i-1]->size(), layer->size()};
+
+            // randomly initialize weights
+            layer->_weights = xt::random::randn<double>(shape);
+        }
+        else {
+            layer->set_input(true);
+
+            layer->_weights = xt::ones<double>({layer->size()});  // will perform identity
+        }
+
+        _layers.back()->set_output(true);
+    }
+
+    this->_is_built = true;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 
@@ -91,6 +107,11 @@ std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 }
 
 std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
+
+    if (!obj.is_built()) {
+        os << "**WARNING:** Model has not been compiled! "
+              "Some layers may not be initialized.\n" << std::endl;
+    }
 
     os << "MNIST Model Architecture:" << std::endl \
        << "-------------------------" << std::endl;

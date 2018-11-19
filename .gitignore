@@ -3,7 +3,7 @@
 
 # Directories
 data/
-**/cmake-build-debug/
+**/cmake-compile-debug/
 **/bazel*/
 
 # IDE

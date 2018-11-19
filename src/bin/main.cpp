@@ -48,9 +48,9 @@ int main() {
     model.add(new model::Layer(64, "hidden_layer:2", ops::funct::relu));
     model.add(new model::Layer(10, "output", ops::funct::sigmoid));
     model.add(new model::Layer(1, "loss", ops::funct::cross_entropy));
-//
-//    // build the model
-//    model.build();
+
+//    // compile the model
+    model.compile();
 
     std::cout << model << std::endl;
 
