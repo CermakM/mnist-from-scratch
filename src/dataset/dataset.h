@@ -5,6 +5,8 @@
 #ifndef MNIST_FROM_SCRATCH_DATASET_H
 #define MNIST_FROM_SCRATCH_DATASET_H
 
+#include <algorithm>
+
 #include <common/common.h>
 #include <common/utils.hpp>
 
@@ -32,8 +34,8 @@ public:
         this->_labels = labels;
     }
 
-    const FeatureT *features() const { return this->_features.get(); }
-    const LabelT *labels() const { return this->_labels.get(); }
+    FeatureT *features() const { return this->_features.get(); }
+    LabelT *labels() const { return this->_labels.get(); }
 
     const xt::xarray<size_t> *classes() const {return &this->_classes; }
 
@@ -91,10 +93,6 @@ namespace images {
 
             MNISTDataset(std::shared_ptr<FeatureTensor> features, std::shared_ptr<LabelTensor> labels);
 
-            auto get_train_images();
-            auto get_train_labels();
-            auto get_test_images();
-            auto get_test_labels();
         };
 
 

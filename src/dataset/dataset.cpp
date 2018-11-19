@@ -2,39 +2,20 @@
 // Created by macermak on 11/9/18.
 //
 
-#include <algorithm>
-
-#include <common/common.h>
 #include "dataset.h"
+
 
 namespace bfs = boost::filesystem;
 
-using FeatureTensorensor = images::mnist::FeatureTensor;
-using LabelTensorensor = images::mnist::LabelTensor;
+using FeatureTensor = images::mnist::FeatureTensor;
+using LabelTensor = images::mnist::LabelTensor;
+
 
 images::mnist::MNISTDataset::MNISTDataset(
         std::shared_ptr<FeatureTensor> features,
         std::shared_ptr<LabelTensor> labels) : Dataset<FeatureTensor, LabelTensor>(features, labels) {
 
 }
-
-
-auto images::mnist::MNISTDataset::get_train_images() {
-    return nullptr;
-}
-
-auto images::mnist::MNISTDataset::get_train_labels() {
-    return nullptr;
-}
-
-auto images::mnist::MNISTDataset::get_test_images() {
-    return nullptr;
-}
-
-auto images::mnist::MNISTDataset::get_test_labels() {
-    return nullptr;
-}
-
 
 images::mnist::MNISTDataset images::mnist::load_dataset(const std::string &data_dir) {
 
@@ -47,10 +28,10 @@ images::mnist::MNISTDataset images::mnist::load_dataset(const std::string &data_
 
     // read data from files
     std::vector<u_char > feature_vec = images::mnist::read_image_file(train_images_path.string());
-    std::vector<u_char > label_vec = images::mnist::read_image_file(train_images_path.string());
+    std::vector<u_char > label_vec = images::mnist::read_image_file(train_labels_path.string());
 
     std::vector<u_char > test_features = images::mnist::read_label_file(test_images_path.string());
-    std::vector<u_char > test_labels = images::mnist::read_label_file(test_images_path.string());
+    std::vector<u_char > test_labels = images::mnist::read_label_file(test_labels_path.string());
 
     // concatenate
     std::move(test_features.begin(), test_features.end(), std::back_inserter(feature_vec));
