@@ -9,15 +9,18 @@ namespace ops {
     namespace funct {
 
         xt::xarray<double> identity(const xt::xarray<double> &x) {
-            return xt::xarray<double>();
+            return x;
         }
 
-        xt::xarray<double> sigmoid(const xt::xarray<double> &x) {
-            return xt::xarray<double>();
+        void sigmoid(xt::xarray<double> &x) {
+            x =  1 / (1 + xt::exp(-x));
         }
 
-        xt::xarray<double> relu(const xt::xarray<double> &x) {
-            return xt::xarray<double>();
+        void relu(xt::xarray<double> &x) {
+
+            auto max = [](const double& t) { return std::max<double>(0, t); };
+
+            std::transform(x.begin(), x.end(), x.begin(), max);
         }
 
         xt::xarray<double> cross_entropy(const xt::xarray<double> &x) {

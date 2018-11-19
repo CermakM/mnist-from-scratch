@@ -21,6 +21,8 @@ namespace model {
 }
 
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj);
+std::ostream& operator<<(std::ostream& os, const model::MNISTModel& obj);
+std::ostream& operator<<(std::ostream& os, const model::Score& obj);
 
 
 // decl
@@ -36,21 +38,27 @@ namespace model {
         const double cross_validation_accuracy;
         const double standard_deviation;
 
-        const std::ostream& operator<<(const Score& obj);
-
     };
 
     class Layer {
 
         size_t _size = 0;
-
-        std::function<tensor_t (const tensor_t&)> activation = ops::funct::relu;
-
         tensor_t _weights;
 
-    public:
+        std::string _name = "";
 
-        std::string name = "";
+        bool _is_input = false;
+        bool _is_output = false;
+        bool _is_hidden = true;
+
+        std::function<void (tensor_t&)> apply_activation = ops::funct::relu;
+
+        const Layer* previous = nullptr;
+        const Layer* next = nullptr;
+
+        friend class MNISTModel;
+
+    public:
 
         explicit Layer() = default;
         Layer(const size_t &size,
@@ -58,8 +66,15 @@ namespace model {
 
         Layer(const size_t &size,
               const std::string &name,
-              const std::function<tensor_t (const tensor_t&)> &activation);
+              const std::function<void (tensor_t&)> &activation);
 
+        const auto& is_input() const { return this->_is_input; }
+        const auto& is_output() const { return this->_is_output; }
+        const auto& is_hidden() const { return this->_is_hidden; }
+
+        const auto& name() const { return this->_name; }
+        const auto& shape() const { return this->_weights.shape(); }
+        const auto& size() const { return this->_size; }
         tensor_t activate(const tensor_t &x);
     };
 
@@ -78,7 +93,7 @@ namespace model {
         bool _is_built = false;
         bool _is_fit = false;
 
-        std::vector<Layer> _layers;
+        std::vector<std::unique_ptr<Layer>> _layers;
 
     public:
 
@@ -87,7 +102,11 @@ namespace model {
         explicit MNISTModel() = default;
         explicit MNISTModel(MNISTConfig& config);
 
-        void add(Layer layer);
+        const std::vector<std::unique_ptr<Layer>>& layers() const {
+            return this->_layers;
+        }
+
+        void add(Layer* layer);
 
         void build();
         void build(const MNISTConfig& build_config);

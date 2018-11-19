@@ -46,11 +46,22 @@ namespace utils {
     template<typename T>
     void vprint(const T &v) {
 
+        std::cout << "{ ";
         for (auto const& e: v) {
-            std::cout << e << " ";
+            std::cout << " " << e << ",";
         }
+        std::cout << " }" << std::endl;
+    }
 
-        std::cout << std::endl;
+    template<typename T>
+    void vprint(std::ostream& os, const T &v) {
+
+        os << "{ ";
+        for (auto const& e: v) {
+            os << " " << e << ",";
+        }
+        os << " }" << std::endl;
+
     }
 }
 

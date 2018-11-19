@@ -41,10 +41,10 @@ namespace ops {
     namespace funct {
 
         xt::xarray<double> identity(const xt::xarray<double> &x);
-        xt::xarray<double> sigmoid(const xt::xarray<double> &x);
-        xt::xarray<double> relu(const xt::xarray<double> &x);
         xt::xarray<double> cross_entropy(const xt::xarray<double> &x);
 
+        void sigmoid(xt::xarray<double> &x);  // inplace
+        void relu(xt::xarray<double> &x);  // inplace
     }
 }
 

@@ -8,6 +8,7 @@ int main() {
     // load dataset
 
     std::cout << "Loading MNIST dataset" << std::endl;
+    std::cout << "..." << std::endl;
 
     auto dataset = images::mnist::load_dataset();
 
@@ -30,8 +31,7 @@ int main() {
     std::cout << "Shape of train labels: ";
     utils::vprint(train_labels.shape());
 
-    // normalize images
-    train_images /= 255;  // 255 is the maximum value of pixel form range 0:255
+    std::cout << std::endl;
 
     model::MNISTConfig config;
     config.learning_rate = 0.001;
@@ -42,15 +42,21 @@ int main() {
 
     model::MNISTModel model(config);
 
-//    // MLP definition
-//    model.add(model::Layer(784, "input", ops::funct::identity));
-//    model.add(model::Layer(128, "hidden_layer:1", ops::funct::relu));
-//    model.add(model::Layer(64, "hidden_layer:2", ops::funct::relu));
-//    model.add(model::Layer(10, "output", ops::funct::sigmoid));
-//    model.add(model::Layer(1, "loss", ops::funct::cross_entropy));
+    // MLP definition
+    model.add(new model::Layer(784, "input", ops::funct::identity));
+    model.add(new model::Layer(128, "hidden_layer:1", ops::funct::relu));
+    model.add(new model::Layer(64, "hidden_layer:2", ops::funct::relu));
+    model.add(new model::Layer(10, "output", ops::funct::sigmoid));
+    model.add(new model::Layer(1, "loss", ops::funct::cross_entropy));
 //
 //    // build the model
 //    model.build();
+
+    std::cout << model << std::endl;
+
+    // normalize images
+//    train_images /= 255;  // 255 is the maximum value of pixel form range 0:255
+
 //
 //    // fit the model
 //    model.fit(train_images, train_labels);

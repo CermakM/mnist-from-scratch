@@ -10,32 +10,37 @@
 model::Layer::Layer(const size_t &size, const std::string &name) {
 
     this->_size = size;
-    this->name = name;
-
-    // initialize weights
-    this->_weights = xt::random::randn<double>({size});
+    this->_name = name;
 }
 
 model::Layer::Layer(
         const size_t &size,
         const std::string &name,
-        const std::function<tensor_t (const tensor_t&)> &activation) {
+        const std::function<void (tensor_t&)> &activation) {
 
     this->_size = size;
-    this->name = name;
+    this->_name = name;
 
     // activation
-    this->activation = activation;
-
-    // initialize weights
-    this->_weights = xt::random::randn<double>({size});
+    this->apply_activation = activation;
 }
 
-xt::xarray<double> model::Layer::activate(const xt::xarray<double> &x) {
+tensor_t model::Layer::activate(const xt::xarray<double> &x) {
 
-    auto prod = xt::linalg::dot(x, this->_weights);
+     auto product = xt::linalg::tensordot(x, xt::transpose(this->_weights), 0);
 
-    return this->activation(prod);
+     return product;
+
+//     tensor_t result = xt::adapt(
+//             &product,
+//             product.size(),
+//             xt::acquire_ownership(),
+//             product.shape());
+
+    // apply activation inplace
+//    this->apply_activation(result);
+
+//    return result;
 }
 
 
@@ -47,9 +52,18 @@ model::MNISTModel::MNISTModel(model::MNISTConfig &config) {
 
 }
 
-void model::MNISTModel::add(model::Layer layer) {
+void model::MNISTModel::add(model::Layer* layer) {
 
-    this->_layers.push_back(layer);
+    if (!_layers.empty()) {
+
+        layer->previous = _layers.back().get();
+
+        // init weights
+        std::vector<size_t> shape = { layer->previous->size(), layer->size() };
+        layer->_weights = xt::random::randn<double>(shape);
+    }
+
+    _layers.push_back(std::make_unique<Layer>(*layer));
 
 }
 
@@ -66,12 +80,27 @@ std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
         "\tTraining epochs: %d\n";
 
     auto out = boost::format(fmt)
-               % obj.learning_rate
                % obj.batch_size
+               % obj.learning_rate
                % obj.epochs;
 
     os << boost::str(out) << std::endl;
 
     return os;
 
+}
+
+std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
+
+    os << "MNIST Model Architecture:" << std::endl \
+       << "-------------------------" << std::endl;
+
+    for (auto& layer : obj.layers()) {
+
+        os << "Layer '" << layer->name() << "': ";
+
+        utils::vprint(os, layer->shape());
+    }
+
+    return os;
 }
