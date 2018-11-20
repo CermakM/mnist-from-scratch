@@ -25,22 +25,23 @@ model::Layer::Layer(
     this->apply_activation = activation;
 }
 
-tensor_t model::Layer::activate(const xt::xarray<double> &x) {
+tensor_t model::Layer::activate(const tensor_t &x) {
 
-     auto product = xt::linalg::tensordot(x, xt::transpose(this->_weights), 0);
+    tensor_t product;
 
-     return product;
+    if (_is_input) {
 
-//     tensor_t result = xt::adapt(
-//             &product,
-//             product.size(),
-//             xt::acquire_ownership(),
-//             product.shape());
+        product = x * this->_weights;
+
+    } else {
+
+        product = xt::linalg::dot(x, this->_weights);
+    }
 
     // apply activation inplace
-//    this->apply_activation(result);
+    this->apply_activation(product);
 
-//    return result;
+    return product;
 }
 
 
@@ -73,7 +74,7 @@ void model::MNISTModel::compile() {
         else {
             layer->set_input(true);
 
-            layer->_weights = xt::ones<double>({layer->size()});  // will perform identity
+            layer->_weights = xt::ones<double>({1});  // will perform identity
         }
 
         _layers.back()->set_output(true);
@@ -82,6 +83,24 @@ void model::MNISTModel::compile() {
     this->_is_built = true;
 }
 
+
+tensor_t model::MNISTModel::forward(const tensor_t &x) {
+
+    tensor_t res;
+
+    for (const auto &layer : _layers) {
+
+        if (layer->is_input()) {
+            // activate by the input
+            res = layer->activate(x); // first layer returns identity
+        } else {
+            res = layer->activate(res);
+        }
+
+    }
+
+    return res;
+}
 
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 

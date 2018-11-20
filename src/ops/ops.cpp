@@ -8,23 +8,29 @@ namespace ops {
 
     namespace funct {
 
-        xt::xarray<double> identity(const xt::xarray<double> &x) {
-            return x;
+        tensor_t identity(const tensor_t x) {
+
+            tensor_t x_ (x.shape());
+
+            std::copy(x.begin(), x.end(), x_.begin());
+
+            return x_;  // return copy
         }
 
-        void sigmoid(xt::xarray<double> &x) {
+        void sigmoid(tensor_t &x) {
             x =  1 / (1 + xt::exp(-x));
         }
 
-        void relu(xt::xarray<double> &x) {
+        void relu(tensor_t &x) {
 
             auto max = [](const double& t) { return std::max<double>(0, t); };
 
             std::transform(x.begin(), x.end(), x.begin(), max);
         }
 
-        xt::xarray<double> cross_entropy(const xt::xarray<double> &x) {
-            return xt::xarray<double>();
+        tensor_t cross_entropy(const tensor_t &x) {
+
+            return x; // TODO
         }
     }
 }

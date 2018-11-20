@@ -22,12 +22,12 @@ endif()
 
 link_directories(SYSTEM "/usr/lib64/")  # libcblas
 
+set(EXTRA_LIBS ${EXTRA_LIBS} dataset model cblas)
+
 
 # target
 
 include_directories("${PROJECT_SOURCE_DIR}/src")
-
-set(EXTRA_LIBS ${EXTRA_LIBS} dataset model cblas)
 
 add_executable(mnist main.cpp)
 

@@ -79,7 +79,7 @@ namespace model {
         void set_input(bool val) { this->_is_input = val; this->_is_hidden = false; }
         void set_output(bool val) { this->_is_output = val; this->_is_hidden = false; }
 
-        tensor_t activate(const tensor_t &x);
+        tensor_t activate(const tensor_t& x);
     };
 
     class MNISTConfig {
@@ -116,13 +116,15 @@ namespace model {
         void add(Layer* layer);
 
         void compile();
-        void compile(const MNISTConfig &build_config);
+        void compile(const MNISTConfig& build_config);
 
-        void fit(xt::xarray<double> features, xt::xarray<u_char> labels);
+        tensor_t forward(const tensor_t &x);
 
-        Score evaluate(xt::xarray<double> features, xt::xarray<u_char> labels);
+        void fit(const tensor_t& features, const tensor_t& labels);
 
-        xt::xarray<u_char> predict(xt::xarray<double> X);
+        Score evaluate(const tensor_t& features, const tensor_t& labels);
+
+        xt::xarray<u_char> predict(const tensor_t& x);
 
     };
 

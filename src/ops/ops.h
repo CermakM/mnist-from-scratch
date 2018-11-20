@@ -13,26 +13,29 @@
 #include "xtensor-blas/xlinalg.hpp"
 
 
+using tensor_t = xt::xarray<double>;
+
+
 namespace ops {
 
-    xt::xarray<double> conv2d (
-            const xt::xarray<double> &x,
+    tensor_t conv2d (
+            const tensor_t &x,
             const xt::xtensor_fixed<double, xt::xshape<2>> &kernel_size,
             const xt::xtensor_fixed<double, xt::xshape<2>> &stride
     );
 
-    xt::xarray<double> conv2d (
-            const xt::xarray<double> &x,
+    tensor_t conv2d (
+            const tensor_t &x,
             const xt::xtensor_fixed<double, xt::xshape<2>> &kernel_size
     );
 
-    xt::xarray<double> maxpool2d (
-            const xt::xarray<double> &x,
+    tensor_t maxpool2d (
+            const tensor_t &x,
             const xt::xtensor_fixed<double, xt::xshape<2>> &pool_size
     );
 
     template<typename T>
-    xt::xarray<double> norm2d(const T& tensor) {
+    tensor_t norm2d(const T& tensor) {
 
         return tensor / (xt::amax(tensor) - xt::amin(tensor));  // very simple normalization
 
@@ -40,11 +43,11 @@ namespace ops {
 
     namespace funct {
 
-        xt::xarray<double> identity(const xt::xarray<double> &x);
-        xt::xarray<double> cross_entropy(const xt::xarray<double> &x);
+        tensor_t identity(const tensor_t x);
+        tensor_t cross_entropy(const tensor_t &x);
 
-        void sigmoid(xt::xarray<double> &x);  // inplace
-        void relu(xt::xarray<double> &x);  // inplace
+        void sigmoid(tensor_t &x);  // inplace
+        void relu(tensor_t &x);  // inplace
     }
 }
 

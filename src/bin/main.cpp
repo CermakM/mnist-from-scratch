@@ -47,18 +47,22 @@ int main() {
     model.add(new model::Layer(128, "hidden_layer:1", ops::funct::relu));
     model.add(new model::Layer(64, "hidden_layer:2", ops::funct::relu));
     model.add(new model::Layer(10, "output", ops::funct::sigmoid));
-    model.add(new model::Layer(1, "loss", ops::funct::cross_entropy));
+//    model.add(new model::Layer(1, "loss", ops::funct::cross_entropy));
 
 //    // compile the model
     model.compile();
 
     std::cout << model << std::endl;
 
-    // normalize images
-//    train_images /= 255;  // 255 is the maximum value of pixel form range 0:255
+//     normalize images
+    train_images /= 255;  // 255 is the maximum value of pixel form range 0:255
 
+ // forward pass with 1 image as input
+    std::cout << model.forward(xt::flatten(xt::view(train_images, 0)));
+
+    utils::vprint(model.forward(xt::flatten(xt::view(train_images, 0))).shape());
 //
-//    // fit the model
+    // fit the model
 //    model.fit(train_images, train_labels);
 
     // score
