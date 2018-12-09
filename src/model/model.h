@@ -40,18 +40,22 @@ namespace model {
 
     };
 
+    enum LayerType {
+        INPUT_LAYER = 'I', OUTPUT_LAYER = 'O', HIDDEN_LAYER = 'H'
+    };
+
     class Layer {
+
+        LayerType _type = LayerType::HIDDEN_LAYER;
+
+        std::string _name = "";
 
         size_t _size = 0;
         tensor_t _weights;
 
-        std::string _name = "";
+        ops::Initializer _initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER;
 
-        bool _is_input = false;
-        bool _is_output = false;
-        bool _is_hidden = true;
-
-        std::function<void (tensor_t&)> apply_activation = ops::funct::relu;
+        std::function<tensor_t (tensor_t&, const tensor_t&)> apply_activation;
 
         const Layer* previous = nullptr;
         const Layer* next = nullptr;
@@ -61,25 +65,17 @@ namespace model {
     public:
 
         explicit Layer() = default;
-        Layer(const size_t &size,
-              const std::string &name);
 
         Layer(const size_t &size,
               const std::string &name,
-              const std::function<void (tensor_t&)> &activation);
-
-        const auto& is_input() const { return this->_is_input; }
-        const auto& is_output() const { return this->_is_output; }
-        const auto& is_hidden() const { return this->_is_hidden; }
+              const std::function<tensor_t (tensor_t&, const tensor_t&)> &activation = ops::funct::relu,
+              ops::Initializer initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER);
 
         const auto& name() const { return this->_name; }
         const auto& shape() const { return this->_weights.shape(); }
         const auto& size() const { return this->_size; }
 
-        void set_input(bool val) { this->_is_input = val; this->_is_hidden = false; }
-        void set_output(bool val) { this->_is_output = val; this->_is_hidden = false; }
-
-        tensor_t activate(const tensor_t& x);
+        tensor_t activate(const tensor_t &x, const tensor_t &y);
     };
 
     class MNISTConfig {
@@ -90,6 +86,8 @@ namespace model {
         double learning_rate = 0.001;
         size_t batch_size = 30;
         size_t epochs = 100;
+
+        std::string loss = "cross_entropy";
     };
 
     class MNISTModel {
@@ -118,7 +116,7 @@ namespace model {
         void compile();
         void compile(const MNISTConfig& build_config);
 
-        tensor_t forward(const tensor_t &x);
+        tensor_t forward(const tensor_t &x, const tensor_t &y);
 
         void fit(const tensor_t& features, const tensor_t& labels);
 

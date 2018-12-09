@@ -42,26 +42,29 @@ int main() {
 
     model::MNISTModel model(config);
 
-    // MLP definition
-    model.add(new model::Layer(784, "input", ops::funct::identity));
+    // MLP train architecture
+    model.add(new model::Layer(784, "input", ops::funct::identity, ops::Initializer::NO_WEIGHTS));
     model.add(new model::Layer(128, "hidden_layer:1", ops::funct::relu));
-    model.add(new model::Layer(64, "hidden_layer:2", ops::funct::relu));
-    model.add(new model::Layer(10, "output", ops::funct::sigmoid));
-//    model.add(new model::Layer(1, "loss", ops::funct::cross_entropy));
+    model.add(new model::Layer(64,  "hidden_layer:2", ops::funct::relu));
+    model.add(new model::Layer(10,  "output", ops::funct::sigmoid));
+    model.add(new model::Layer(10,  "softmax", ops::funct::softmax, ops::Initializer::NO_WEIGHTS));
 
-//    // compile the model
     model.compile();
 
     std::cout << model << std::endl;
 
+    // apply one hot encoding to train labels
+    xt::xarray<size_t> encoded_labels = ops::one_hot_encode(train_labels, 10);
+
 //     normalize images
     train_images /= 255;  // 255 is the maximum value of pixel form range 0:255
 
- // forward pass with 1 image as input
-    std::cout << model.forward(xt::flatten(xt::view(train_images, 0)));
+    // forward pass with 1 image as input
+    auto loss = model.forward(xt::flatten(xt::view(train_images, 0)),
+                              xt::view(encoded_labels, 0));
 
-    utils::vprint(model.forward(xt::flatten(xt::view(train_images, 0))).shape());
-//
+    std::cout << loss << std::endl;
+
     // fit the model
 //    model.fit(train_images, train_labels);
 

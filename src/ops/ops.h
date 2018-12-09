@@ -8,15 +8,24 @@
 #include <algorithm>
 
 #include "xtensor/xarray.hpp"
+#include "xtensor/xexception.hpp"
 #include "xtensor/xrandom.hpp"
+#include "xtensor/xreducer.hpp"
 
 #include "xtensor-blas/xlinalg.hpp"
+
+#include "common/utils.hpp"
 
 
 using tensor_t = xt::xarray<double>;
 
 
 namespace ops {
+
+    enum Initializer {
+        NO_WEIGHTS = false, RANDOM_WEIGHT_INITIALIZER = true
+    };
+
 
     tensor_t conv2d (
             const tensor_t &x,
@@ -41,13 +50,17 @@ namespace ops {
 
     }
 
+    xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes);
+
+
     namespace funct {
 
-        tensor_t identity(const tensor_t x);
-        tensor_t cross_entropy(const tensor_t &x);
+        tensor_t identity(const tensor_t &x, const tensor_t &y);
+        tensor_t softmax(const tensor_t &x, const tensor_t &y);
+        tensor_t cross_entropy(const tensor_t &input, const tensor_t &target);
 
-        void sigmoid(tensor_t &x);  // inplace
-        void relu(tensor_t &x);  // inplace
+        tensor_t sigmoid(const tensor_t &x, const tensor_t &y);  // inplace
+        tensor_t relu(const tensor_t &x, const tensor_t &y);  // inplace
     }
 }
 

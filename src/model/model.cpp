@@ -7,41 +7,31 @@
 
 // Layer
 
-model::Layer::Layer(const size_t &size, const std::string &name) {
+model::Layer::Layer(const size_t &size, const std::string &name,
+                    const std::function<tensor_t(tensor_t &, const tensor_t &)> &activation,
+                    ops::Initializer initializer) {
 
     this->_size = size;
     this->_name = name;
-}
 
-model::Layer::Layer(
-        const size_t &size,
-        const std::string &name,
-        const std::function<void (tensor_t&)> &activation) {
-
-    this->_size = size;
-    this->_name = name;
+    this->_initializer = initializer;  // how to initialize weights
 
     // activation
     this->apply_activation = activation;
 }
 
-tensor_t model::Layer::activate(const tensor_t &x) {
 
-    tensor_t product;
+tensor_t model::Layer::activate(const tensor_t &x, const tensor_t &y) {
 
-    if (_is_input) {
+    tensor_t ret ({x});
 
-        product = x * this->_weights;
+    if (this->_initializer != ops::Initializer::NO_WEIGHTS) {
 
-    } else {
-
-        product = xt::linalg::dot(x, this->_weights);
+        ret = xt::linalg::dot(x, this->_weights);
     }
 
-    // apply activation inplace
-    this->apply_activation(product);
-
-    return product;
+    // apply activation
+    return this->apply_activation(ret, y);
 }
 
 
@@ -61,41 +51,55 @@ void model::MNISTModel::add(model::Layer* layer) {
 
 void model::MNISTModel::compile() {
 
+    if (this->_is_built) {
+
+        std::cerr << "Model has already been compiled. Skipping." << std::endl;
+
+        return;
+    }
+
     for (int i = 0; i < _layers.size(); i++) {
 
         auto &layer = _layers[i];
 
-        if (i > 0) {
-            std::vector<size_t> shape = {_layers[i-1]->size(), layer->size()};
+        if (!i) {
+
+            layer->_type = LayerType::INPUT_LAYER;
+            layer->_initializer = ops::Initializer::NO_WEIGHTS;  // correct default
+
+        }
+
+        if (layer->_initializer != ops::Initializer::NO_WEIGHTS) {
+
+            std::vector<size_t> shape = {_layers[i - 1]->size(), layer->size()};
 
             // randomly initialize weights
             layer->_weights = xt::random::randn<double>(shape);
-        }
-        else {
-            layer->set_input(true);
 
-            layer->_weights = xt::ones<double>({1});  // will perform identity
-        }
+        } else {
 
-        _layers.back()->set_output(true);
+            layer->_weights = xt::empty<double>({layer->size()});  // will perform identity
+
+        }
     }
+
+    // mark output layer (for prediction purposes)
+    _layers.back()->_type = LayerType::OUTPUT_LAYER;
+
+    // add loss layer (for training purposes)
+    this->add(new model::Layer(1, "cross_entropy", ops::funct::cross_entropy, ops::Initializer::NO_WEIGHTS));
 
     this->_is_built = true;
 }
 
 
-tensor_t model::MNISTModel::forward(const tensor_t &x) {
+tensor_t model::MNISTModel::forward(const tensor_t &x, const tensor_t &y) {
 
-    tensor_t res;
+    tensor_t res({x});
 
     for (const auto &layer : _layers) {
 
-        if (layer->is_input()) {
-            // activate by the input
-            res = layer->activate(x); // first layer returns identity
-        } else {
-            res = layer->activate(res);
-        }
+        res = layer->activate(res, y);
 
     }
 

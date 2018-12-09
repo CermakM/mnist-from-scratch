@@ -5,7 +5,11 @@
 #ifndef MNIST_FROM_SCRATCH_UTILS_H
 #define MNIST_FROM_SCRATCH_UTILS_H
 
+#include <fstream>
+#include <iostream>
+
 #include "xtensor/xcsv.hpp"
+
 #include "exceptions.hpp"
 
 
