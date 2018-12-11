@@ -67,6 +67,12 @@ namespace utils {
         os << " }" << std::endl;
 
     }
+
+    template<typename T = double>
+    const auto expand_dim(const xt::xarray<T> &e) {
+
+        return xt::view(e, xt::all(), xt::newaxis());
+    }
 }
 
 #endif //MNIST_FROM_SCRATCH_UTILS_H

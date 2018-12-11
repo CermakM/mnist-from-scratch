@@ -29,10 +29,10 @@ std::ostream& operator<<(std::ostream& os, const model::Score& obj);
 
 namespace model {
 
-    class Score {
-    public:
+    struct Score {
 
-        explicit Score() = default;
+        const double total;
+        const double correct;
 
         const double accuracy;
         const double standard_deviation;
@@ -52,7 +52,7 @@ namespace model {
 
         tensor_t _biases;
         tensor_t _weights;
-        tensor_t _activations;
+        tensor_t _activation;
 
         ops::Initializer _initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER;
 
@@ -82,9 +82,9 @@ namespace model {
 
         explicit MNISTConfig() = default;
 
-        double learning_rate = 0.001;
+        double learning_rate = 0.01;
         size_t batch_size = 30;
-        size_t epochs = 100;
+        size_t epochs = 10;
 
         std::string loss = "quadratic";
     };
@@ -97,7 +97,7 @@ namespace model {
         std::vector<std::unique_ptr<Layer>> _layers;
 
         std::function<tensor_t (const tensor_t&, const tensor_t&)> _loss_function;
-        std::function<tensor_t (const tensor_t&, const tensor_t&)> _loss_gradient;
+        std::function<tensor_t (const tensor_t&, const tensor_t&, const tensor_t&)> _loss_gradient;
 
     public:
 
@@ -118,9 +118,10 @@ namespace model {
         MNISTModel& compile();
         MNISTModel& compile(const MNISTConfig& build_config);
 
-        MNISTModel& fit(const tensor_t& features, const tensor_t& labels, double epochs = 5);
+        MNISTModel& fit(const tensor_t& features, const tensor_t& labels);
 
         tensor_t predict(const tensor_t& x);
+        tensor_t predict_proba(const tensor_t& x);
 
         tensor_t forward(const tensor_t &x);
         tensor_t compute_loss(const tensor_t& output, const tensor_t& target);

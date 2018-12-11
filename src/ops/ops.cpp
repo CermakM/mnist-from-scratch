@@ -61,7 +61,8 @@ namespace ops {
             xt::check_dimension(output.shape(), target.shape());
 
             // apply softmax and log
-            tensor_t logits = target * xt::log(ops::softmax(output) + 1e-6);
+            tensor_t logits = target * xt::log(ops::softmax(output) + 1e-6) + \
+                (1 - target) * xt::log(ops::softmax(1 - output));
 
             return -xt::sum(logits);
         }
@@ -70,7 +71,7 @@ namespace ops {
 
             xt::check_dimension(output.shape(), target.shape());
 
-            return xt::pow(target - output, 2) / 2;
+            return xt::sum(xt::pow(target - output, 2)) / 2;
         }
     }
 
@@ -89,14 +90,17 @@ namespace ops {
             return xt::where(x < 0, 0, 1);
         }
 
-        tensor_t quadratic_(const tensor_t &output, const tensor_t &target) {
+        tensor_t quadratic_(const tensor_t &z, const tensor_t &output, const tensor_t &target) {
 
-            return target - output;
+            return ((output - target) * ops::diff::sigmoid_(z));
         }
 
-        tensor_t categorical_cross_entropy_(const tensor_t &output, const tensor_t &target) {
+        tensor_t categorical_cross_entropy_(const tensor_t &z, const tensor_t &output, const tensor_t &target) {
 
-            // TODO
+            // unused
+            std::ignore = z;
+
+            return (output - target);
         }
     }
 }

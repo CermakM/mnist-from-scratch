@@ -12,6 +12,7 @@
 #include "xtensor/xmath.hpp"
 #include "xtensor/xrandom.hpp"
 #include "xtensor/xreducer.hpp"
+#include "xtensor/xsort.hpp"
 
 #include "xtensor-blas/xlinalg.hpp"
 
@@ -71,8 +72,8 @@ namespace ops {
         tensor_t sigmoid_(const tensor_t &x);
         tensor_t relu_(const tensor_t &x);
 
-        tensor_t categorical_cross_entropy_(const tensor_t &output, const tensor_t &target);
-        tensor_t quadratic_(const tensor_t &output, const tensor_t &target);
+        tensor_t categorical_cross_entropy_(const tensor_t &z, const tensor_t &activation, const tensor_t &target);
+        tensor_t quadratic_(const tensor_t &z, const tensor_t &activation, const tensor_t &target);
 
     }
 

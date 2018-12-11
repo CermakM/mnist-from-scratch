@@ -71,7 +71,7 @@ namespace images {
         );
 
         const size_t SIZEOF_TRAIN_DATASET = 60000;
-        const size_t SIZEOF_TEST_DATASET = 10000;
+        const size_t SIZEOF_TEST_DATASET  = 10000;
 
         const size_t SIZEOF_FULL_DATASET = SIZEOF_TRAIN_DATASET + SIZEOF_TEST_DATASET;
 
