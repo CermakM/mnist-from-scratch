@@ -12,7 +12,7 @@ class FileNotExistsError : public std::runtime_error {
 
 public:
 
-    explicit FileNotExistsError(std::string error_msg)
+    explicit FileNotExistsError(const std::string &error_msg)
             : std::runtime_error("FileNotExistsError") {
 
         this->msg = error_msg;

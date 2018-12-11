@@ -7,8 +7,7 @@
 int main() {
     // load dataset
 
-    std::cout << "Loading MNIST dataset" << std::endl;
-    std::cout << "..." << std::endl;
+    std::cout << "Loading MNIST dataset... " << std::endl;
 
     auto dataset = images::mnist::load_dataset();
 
@@ -68,30 +67,27 @@ int main() {
     std::cout << "True label: " << xt::view(labels, 0) << " | Prediction: " << y_ << std::endl;
 
     // score the model
-//    tensor_t test_images = xt::view(
-//            *dataset.features(),
-//            xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
-//            xt::all()
-//    );
-//
-//    tensor_t test_labels = xt::view(
-//            *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
-//
-//    std::cout << test_labels << std::endl;
-//    std::cout << xt::unique(test_labels) << std::endl;
-//
-//    utils::vprint(test_images.shape());
-//    utils::vprint(test_labels.shape());
+    tensor_t test_images = xt::view(
+            *dataset.features(),
+            xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
+            xt::all()
+    );
 
-//    // flatten and normalize train images
-//    auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784}) / 255;
-//
-//    model::Score score = model.evaluate(
-//            test_features,
-//            ops::one_hot_encode(test_labels, 10)
-//    );
-//
-//    std::cout << score << std::endl;
+    tensor_t test_labels = xt::view(
+            *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
+
+    utils::vprint(test_images.shape());
+    utils::vprint(test_labels.shape());
+
+    // flatten and normalize train images
+    auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784}) / 255;
+
+    model::Score score = model.evaluate(
+            test_features,
+            ops::one_hot_encode(test_labels, 10)
+    );
+
+    std::cout << score << std::endl;
 
     return 0;
 }

@@ -11,7 +11,12 @@
 #include <common/utils.hpp>
 
 
-const std::string DATA_DIR = "data/";
+#define DATA_DIR "data/"
+#define MNIST_DATA_DIR  "data/mnist/"
+#define TRAIN_IMAGES    "train-images-idx3-ubyte"
+#define TRAIN_LABELS    "train-labels-idx1-ubyte"
+#define TEST_IMAGES     "t10k-images-idx3-ubyte"
+#define TEST_LABELS     "t10k-labels-idx1-ubyte"
 
 
 template<typename FeatureT, typename LabelT>
@@ -54,22 +59,6 @@ namespace images {
         const char* ENV_TEST_IMAGES = "MNIST_TEST_IMAGES";
         const char* ENV_TEST_LABELS = "MNIST_TEST_LABELS";
 
-        const std::string MNIST_DATA_DIR = utils::getenv(
-                ENV_MNIST_DATA_DIR, (DATA_DIR + "mnist/").c_str()
-        );
-        const std::string TRAIN_IMAGES = utils::getenv(
-                ENV_TRAIN_IMAGES, "train-images-idx3-ubyte"
-        );
-        const std::string TRAIN_LABELS = utils::getenv(
-                ENV_TRAIN_LABELS, "train-labels-idx1-ubyte"
-        );
-        const std::string TEST_IMAGES = utils::getenv(
-                ENV_TEST_IMAGES, "t10k-images-idx3-ubyte"
-        );
-        const std::string TEST_LABELS = utils::getenv(
-                ENV_TEST_LABELS, "t10k-labels-idx1-ubyte"
-        );
-
         const size_t SIZEOF_TRAIN_DATASET = 60000;
         const size_t SIZEOF_TEST_DATASET  = 10000;
 
@@ -83,7 +72,7 @@ namespace images {
         using lshape_t = xt::xshape<SIZEOF_FULL_DATASET, 1>;
 
         using FeatureTensor = xt::xtensor_fixed<double, fshape_t>;
-        using LabelTensor = xt::xtensor_fixed<double, lshape_t>;
+        using LabelTensor = xt::xtensor_fixed<size_t, lshape_t>;
 
         class MNISTDataset : public Dataset<FeatureTensor, LabelTensor> {
 
@@ -114,7 +103,7 @@ namespace images {
          * @param data_dir directory where the data files are stored [default="data/"]
          * @return
          */
-        MNISTDataset load_dataset_csv(const std::string &data_dir = MNIST_DATA_DIR);
+        MNISTDataset load_dataset_csv();
 
 
         /**
@@ -122,19 +111,17 @@ namespace images {
          *
          * Directory is expected to contain data files from http://yann.lecun.com/exdb/mnist/.
          *
-         * @param data_dir directory where the data files are stored [default="data/"]
-         * @return
+         * @return  MNISTDataset
          */
-        MNISTDataset load_dataset(const std::string &data_dir = MNIST_DATA_DIR);
+        MNISTDataset load_dataset();
 
 
         /**
          * Load MNIST images.
          *
-         * @param fpath  path to the file
-         * @return  vector of pixels as characters (needs to be further reshaped)
+         * @return  MNISTDataset
          */
-        std::vector<u_char > read_image_file(const std::string &fpath);
+        std::vector<double> read_image_file(const std::string &fpath);
 
 
         /**
@@ -143,7 +130,7 @@ namespace images {
          * @param fpath  path to the file
          * @return  vector of labels as characters
          */
-        std::vector<u_char > read_label_file(const std::string &fpath);
+        std::vector<size_t> read_label_file(const std::string &fpath);
 
 
         /**
@@ -153,7 +140,8 @@ namespace images {
          * @param start_b  data start byte
          * @return  1d vector of characters read from the data file
          */
-        std::vector<u_char > read_data_file(const std::string &fpath, const size_t& start_b = 8);
+        template<typename T = double>
+        std::vector<T> read_data_file(const std::string &fpath, const size_t& start_b = 8);
     }
 }
 

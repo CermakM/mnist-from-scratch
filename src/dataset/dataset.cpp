@@ -15,35 +15,37 @@ images::mnist::MNISTDataset::MNISTDataset(
         std::shared_ptr<FeatureTensor> features,
         std::shared_ptr<LabelTensor> labels) : Dataset<FeatureTensor, LabelTensor>(features, labels) {
 
+    // default
+
 }
 
-images::mnist::MNISTDataset images::mnist::load_dataset(const std::string &data_dir) {
+images::mnist::MNISTDataset images::mnist::load_dataset() {
 
     // define paths to data files
-    bfs::path train_images_path = bfs::path(data_dir) / images::mnist::TRAIN_IMAGES;
-    bfs::path train_labels_path = bfs::path(data_dir) / images::mnist::TRAIN_LABELS;
+    bfs::path train_images_path = bfs::path(MNIST_DATA_DIR) / TRAIN_IMAGES;
+    bfs::path train_labels_path = bfs::path(MNIST_DATA_DIR) / TRAIN_LABELS;
 
-    bfs::path test_images_path = bfs::path(data_dir) / images::mnist::TEST_IMAGES;
-    bfs::path test_labels_path = bfs::path(data_dir) / images::mnist::TEST_LABELS;
+    bfs::path test_images_path = bfs::path(MNIST_DATA_DIR) / TEST_IMAGES;
+    bfs::path test_labels_path = bfs::path(MNIST_DATA_DIR) / TEST_LABELS;
 
     // read data from files
-    std::vector<u_char > feature_vec = images::mnist::read_image_file(train_images_path.string());
-    std::vector<u_char > label_vec = images::mnist::read_image_file(train_labels_path.string());
+    std::vector<double> feature_vec = images::mnist::read_image_file(train_images_path.string());
+    std::vector<size_t> label_vec = images::mnist::read_label_file(train_labels_path.string());
 
-    std::vector<u_char > test_features = images::mnist::read_label_file(test_images_path.string());
-    std::vector<u_char > test_labels = images::mnist::read_label_file(test_labels_path.string());
+    std::vector<double> test_features = images::mnist::read_image_file(test_images_path.string());
+    std::vector<size_t> test_labels = images::mnist::read_label_file(test_labels_path.string());
 
     // concatenate
     std::move(test_features.begin(), test_features.end(), std::back_inserter(feature_vec));
     std::move(test_labels.begin(), test_labels.end(), std::back_inserter(label_vec));
 
-
-    // adapt to xtensor and cast to double for future compatibility
-    auto features = std::make_shared<images::mnist::FeatureTensor>(xt::adapt(feature_vec));
-    auto labels = std::make_shared<images::mnist::LabelTensor>(xt::adapt(label_vec));
+    auto features = xt::adapt(feature_vec, images::mnist::fshape_t());
+    auto labels = xt::adapt(label_vec, images::mnist::lshape_t());
 
     // create and return dataset
-    return images::mnist::MNISTDataset(features, labels);
+    return images::mnist::MNISTDataset(
+            std::make_shared<FeatureTensor>(features),
+            std::make_shared<LabelTensor>(labels));
 }
 
 
@@ -52,7 +54,7 @@ void images::mnist::download(const std::string &out_dir) {
 }
 
 
-std::vector<u_char > images::mnist::read_image_file(const std::string &fpath) {
+std::vector<double> images::mnist::read_image_file(const std::string &fpath) {
 
     /*
      * The data are stored in the following way:
@@ -66,13 +68,13 @@ std::vector<u_char > images::mnist::read_image_file(const std::string &fpath) {
      * 0017     unsigned byte   ??               pixel
      */
 
-    std::vector<u_char > features = images::mnist::read_data_file(fpath, 16);
+    std::vector<double> features = images::mnist::read_data_file(fpath, 16);
 
     return features;
 }
 
 
-std::vector<u_char > images::mnist::read_label_file(const std::string &fpath) {
+std::vector<size_t> images::mnist::read_label_file(const std::string &fpath) {
 
     /*
      * The data are stored in the following way:
@@ -84,13 +86,14 @@ std::vector<u_char > images::mnist::read_label_file(const std::string &fpath) {
      * 0009     unsigned byte   ??               label
      */
 
-    std::vector<u_char> labels = images::mnist::read_data_file(fpath, 8);
+    std::vector<size_t> labels = images::mnist::read_data_file<size_t>(fpath, 8);
 
     return labels;
 }
 
 
-std::vector<u_char > images::mnist::read_data_file(const std::string &fpath, const size_t& start_b) {
+template<typename T>
+std::vector<T> images::mnist::read_data_file(const std::string &fpath, const size_t& start_b) {
 
     std::ifstream in_file (fpath.c_str(), std::ios_base::in | std::ios_base::binary);
 
@@ -113,9 +116,9 @@ std::vector<u_char > images::mnist::read_data_file(const std::string &fpath, con
         throw std::runtime_error("Magic number values do not match.");
     }
 
-    in_file.seekg(start_b, in_file.beg);
+    in_file.seekg(start_b, std::ifstream::beg);
 
-    std::vector<u_char > data_vec;
+    std::vector<T> data_vec;
     data_vec.reserve(n_images);
 
     std::istreambuf_iterator<char > it (in_file);
@@ -123,7 +126,7 @@ std::vector<u_char > images::mnist::read_data_file(const std::string &fpath, con
 
     while (it != eos) {
         u_char c = boost::endian::endian_reverse((u_char) *it++);
-        data_vec.push_back(c);
+        data_vec.push_back((T) c);
     }
 
     in_file.close();
