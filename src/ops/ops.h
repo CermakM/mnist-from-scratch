@@ -9,6 +9,7 @@
 
 #include "xtensor/xarray.hpp"
 #include "xtensor/xexception.hpp"
+#include "xtensor/xmath.hpp"
 #include "xtensor/xrandom.hpp"
 #include "xtensor/xreducer.hpp"
 
@@ -23,7 +24,7 @@ using tensor_t = xt::xarray<double>;
 namespace ops {
 
     enum Initializer {
-        NO_WEIGHTS = false, RANDOM_WEIGHT_INITIALIZER = true
+        FROZEN_WEIGHTS = false, RANDOM_WEIGHT_INITIALIZER = true
     };
 
 
@@ -53,14 +54,33 @@ namespace ops {
     xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes);
 
 
+    tensor_t identity(const tensor_t &x);
+    tensor_t softmax(const tensor_t &x);
+
     namespace funct {
 
-        tensor_t identity(const tensor_t &x, const tensor_t &y);
-        tensor_t softmax(const tensor_t &x, const tensor_t &y);
-        tensor_t cross_entropy(const tensor_t &input, const tensor_t &target);
+        tensor_t sigmoid(const tensor_t &x);  // inplace
+        tensor_t relu(const tensor_t &x);  // inplace
 
-        tensor_t sigmoid(const tensor_t &x, const tensor_t &y);  // inplace
-        tensor_t relu(const tensor_t &x, const tensor_t &y);  // inplace
+    }
+
+    namespace diff {
+
+        tensor_t softmax_(const tensor_t &x);
+
+        tensor_t sigmoid_(const tensor_t &x);
+        tensor_t relu_(const tensor_t &x);
+
+        tensor_t categorical_cross_entropy_(const tensor_t &output, const tensor_t &target);
+        tensor_t quadratic_(const tensor_t &output, const tensor_t &target);
+
+    }
+
+    namespace loss {
+
+        tensor_t categorical_cross_entropy(const tensor_t &output, const tensor_t &target);
+        tensor_t quadratic(const tensor_t &output, const tensor_t &target);
+
     }
 }
 

@@ -6,7 +6,6 @@
 
 namespace ops {
 
-
     xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes) {
 
         std::vector<size_t> shape ({tensor.shape()[0], n_classes});
@@ -22,61 +21,82 @@ namespace ops {
     }
 
 
+    tensor_t identity(const tensor_t &x) {
+
+        return tensor_t ({x});  // return copy
+    }
+
+    tensor_t softmax(const tensor_t &x) {
+
+        tensor_t ret = xt::exp(x);
+
+        return ret / xt::sum(ret);
+    }
+
+
     namespace funct {
 
-        tensor_t identity(const tensor_t &x, const tensor_t &y) {
+        tensor_t sigmoid(const tensor_t &x) {
 
-            // y is unused
-            std::ignore = y;
-
-            return tensor_t ({x});  // return copy
+            return 1 / (1 + xt::exp(-x));
         }
 
-        tensor_t sigmoid(const tensor_t &x, const tensor_t &y) {
+        tensor_t relu(const tensor_t &x) {
 
-            // y is unused
-            std::ignore = y;
+            tensor_t ret({x});
 
-            return  1 / (1 + xt::exp(-x));
-        }
-
-        tensor_t relu(const tensor_t &x, const tensor_t &y) {
-
-            // y is unused
-            std::ignore = y;
-
-            tensor_t ret ({x});
-
-            auto max = [](const double& t) { return std::max<double>(0, t); };
+            auto max = [](const double &t) { return std::max<double>(0, t); };
 
             std::transform(x.begin(), x.end(), ret.begin(), max);
 
             return ret;
         }
+    }
 
-        tensor_t softmax(const tensor_t &x, const tensor_t &y) {
+    namespace loss {
 
-            // y is unused
-            std::ignore = y;
-
-            tensor_t ret = xt::exp(x);
-
-            return ret / xt::sum(ret);
-        }
-
-
-        tensor_t cross_entropy(const tensor_t &input, const tensor_t &target) {
+        tensor_t categorical_cross_entropy(const tensor_t &output, const tensor_t &target) {
 
             // check that the dimensions match, else throw
-            xt::check_dimension(input.shape(), target.shape());
+            xt::check_dimension(output.shape(), target.shape());
 
-            tensor_t logits = target * xt::log(input + 1e-6);
-
-            std::cout << input << std::endl;
-            std::cout << target << std::endl;
-            std::cout << logits << std::endl;
+            // apply softmax and log
+            tensor_t logits = target * xt::log(ops::softmax(output) + 1e-6);
 
             return -xt::sum(logits);
+        }
+
+        tensor_t quadratic(const tensor_t &output, const tensor_t &target) {
+
+            xt::check_dimension(output.shape(), target.shape());
+
+            return xt::pow(target - output, 2) / 2;
+        }
+    }
+
+
+    namespace diff {
+
+        tensor_t sigmoid_(const tensor_t &x) {
+
+            auto sigma = ops::funct::sigmoid(x);
+
+            return sigma * (1 - sigma);
+        }
+
+        tensor_t relu_(const tensor_t &x) {
+
+            return xt::where(x < 0, 0, 1);
+        }
+
+        tensor_t quadratic_(const tensor_t &output, const tensor_t &target) {
+
+            return target - output;
+        }
+
+        tensor_t categorical_cross_entropy_(const tensor_t &output, const tensor_t &target) {
+
+            // TODO
         }
     }
 }

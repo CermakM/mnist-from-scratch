@@ -34,10 +34,8 @@ namespace model {
 
         explicit Score() = default;
 
-        const double precision;
-        const double cross_validation_accuracy;
+        const double accuracy;
         const double standard_deviation;
-
     };
 
     enum LayerType {
@@ -51,14 +49,15 @@ namespace model {
         std::string _name = "";
 
         size_t _size = 0;
+
+        tensor_t _biases;
         tensor_t _weights;
+        tensor_t _activations;
 
         ops::Initializer _initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER;
 
-        std::function<tensor_t (tensor_t&, const tensor_t&)> apply_activation;
-
-        const Layer* previous = nullptr;
-        const Layer* next = nullptr;
+        std::function<tensor_t (const tensor_t&)> _transfer_function;
+        std::function<tensor_t (const tensor_t&)> _transfer_gradient;
 
         friend class MNISTModel;
 
@@ -68,14 +67,14 @@ namespace model {
 
         Layer(const size_t &size,
               const std::string &name,
-              const std::function<tensor_t (tensor_t&, const tensor_t&)> &activation = ops::funct::relu,
+              const std::function<tensor_t (const tensor_t&)> &activation = ops::funct::relu,
               ops::Initializer initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER);
 
         const auto& name() const { return this->_name; }
         const auto& shape() const { return this->_weights.shape(); }
         const auto& size() const { return this->_size; }
 
-        tensor_t activate(const tensor_t &x, const tensor_t &y);
+        tensor_t& activate(const tensor_t &x);
     };
 
     class MNISTConfig {
@@ -87,7 +86,7 @@ namespace model {
         size_t batch_size = 30;
         size_t epochs = 100;
 
-        std::string loss = "cross_entropy";
+        std::string loss = "quadratic";
     };
 
     class MNISTModel {
@@ -96,6 +95,9 @@ namespace model {
         bool _is_fit = false;
 
         std::vector<std::unique_ptr<Layer>> _layers;
+
+        std::function<tensor_t (const tensor_t&, const tensor_t&)> _loss_function;
+        std::function<tensor_t (const tensor_t&, const tensor_t&)> _loss_gradient;
 
     public:
 
@@ -113,17 +115,19 @@ namespace model {
 
         void add(Layer* layer);
 
-        void compile();
-        void compile(const MNISTConfig& build_config);
+        MNISTModel& compile();
+        MNISTModel& compile(const MNISTConfig& build_config);
 
-        tensor_t forward(const tensor_t &x, const tensor_t &y);
+        MNISTModel& fit(const tensor_t& features, const tensor_t& labels, double epochs = 5);
 
-        void fit(const tensor_t& features, const tensor_t& labels);
+        tensor_t predict(const tensor_t& x);
+
+        tensor_t forward(const tensor_t &x);
+        tensor_t compute_loss(const tensor_t& output, const tensor_t& target);
+
+        void back_prop(const tensor_t &output, const tensor_t &target);
 
         Score evaluate(const tensor_t& features, const tensor_t& labels);
-
-        xt::xarray<u_char> predict(const tensor_t& x);
-
     };
 
 }
