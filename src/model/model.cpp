@@ -44,7 +44,7 @@ tensor_t& model::Layer::activate(const tensor_t &x) {
 
     if (this->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
-        ret = xt::linalg::dot(this->_weights, x);
+        ret = (xt::linalg::dot(this->_weights, x));
     }
 
     // apply and store activations
@@ -91,29 +91,22 @@ model::MNISTModel& model::MNISTModel::compile() {
         return *this;
     }
 
-    for (int i = 0; i < _layers.size(); i++) {
+    // input layer
+    _layers[0]->_type = LayerType::INPUT_LAYER;
+    _layers[0]->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // correct default
+
+    // hidden layers + output layer
+    for (int i = 1; i < _layers.size(); i++) {
 
         auto &layer = _layers[i];
 
-        if (!i) {
-
-            layer->_type = LayerType::INPUT_LAYER;
-            layer->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // correct default
-
-        }
+        std::vector<size_t> shape = {layer->size(), _layers[i - 1]->size()};
 
         if (layer->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
-            std::vector<size_t> shape = {layer->size(), _layers[i - 1]->size()};
-
-            // randomly initialize weights
-            layer->_biases  = xt::ones<double>({layer->size()});
+            // randomly initialize weights and biases
+            layer->_bias  = xt::random::randn<double>({(int) shape[0], 1});
             layer->_weights = xt::random::randn<double>(shape);
-
-        } else {
-
-            layer->_biases  = xt::empty<double>({layer->size()});
-            layer->_weights = xt::empty<double>({layer->size()});  // will perform identity
 
         }
     }
@@ -135,24 +128,29 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
 
     std::cout << "Fitting model... \n" << std::endl;
 
-    double tol = 1e-4;  // error tolerance -- stop condition
+    double tol = this->config.tol;  // error tolerance -- stop condition
 
     xt::check_dimension(features.shape(), labels.shape());
 
-    for (int epoch = 0; epoch < this->config.epochs; epoch++) {
+    for (int epoch = 1; epoch < this->config.epochs + 1; epoch++) {
 
         // single sample  TODO: work with mini-batches, this is slow and inefficient
 
         for (int i = 0; i < features.shape()[0]; i++) {
 
-            tensor_t output = this->forward(xt::view(features, i));
-            tensor_t target = xt::view(labels, i);
+            auto x = xt::view(features, i, xt::all());
 
-            if (!((i * (epoch + 1) % this->config.log_step_count_steps))) {
+            tensor_t output = this->forward(x);
+            tensor_t target = xt::view(labels, i, xt::all());
+
+            if (!((i * (epoch) % this->config.log_step_count_steps))) {
                 auto loss = compute_loss(output, target);
 
-                std::cout << "Epoch: " << epoch << " Step: " << i * (epoch + 1) << std::endl;
-                std::cout << "Loss: " << loss << std::endl;
+                std::cout << "Epoch: " << epoch << std::endl;
+                std::cout << "Step:  " << i + (int(features.shape()[0]) * epoch) << std::endl;
+                std::cout << "\nLoss:  " << loss << std::endl;
+
+                std::cout << "\n---\n" << std::endl;
 
                 if (xt::all(loss < tol)) {
                     std::cerr << "Tolerance reached. Early stopping." << std::endl;
@@ -185,9 +183,6 @@ tensor_t model::MNISTModel::forward(const tensor_t &x) {
 
 void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target) {
 
-    const auto& x = utils::expand_dim(output);
-    const auto& y = utils::expand_dim(target);
-
     size_t L = _layers.size() - 1;
 
     // gradient vectors
@@ -197,7 +192,7 @@ void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target
     // initialize gradient vectors
     for (auto &_layer : _layers) {
 
-        nabla_w.emplace_back(xt::zeros<double>(_layer->_biases.shape()));
+        nabla_w.emplace_back(xt::zeros<double>(_layer->_bias.shape()));
         nabla_b.emplace_back(xt::zeros<double>(_layer->_weights.shape()));
     }
 
@@ -209,23 +204,24 @@ void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target
 
         size_t l = L - i;
 
-        z = xt::linalg::dot( _layers[l]->_weights, _layers[l - 1]->_activation);
-        z = utils::expand_dim(z);
+        z = xt::linalg::dot(_layers[l]->_weights, _layers[l - 1]->_activation);
 
         if ( l < L) {
             delta = (xt::linalg::dot(xt::transpose(_layers[l + 1]->_weights), delta) * _layers[l]->_transfer_gradient(z));
         } else {
             // take the negative gradient of cost function to compute output error
-            delta = _loss_gradient(z, x, y);
+            delta = _loss_gradient(z, output, target);
         }
 
         // the gradient with respect to the weights
-        nabla_w[l] = xt::linalg::dot(delta, xt::transpose(utils::expand_dim(_layers[l-1]->_activation)));
+        nabla_b[l] = delta;
+        nabla_w[l] = xt::linalg::dot(delta, xt::transpose(_layers[l-1]->_activation));
 
         // adjust weights accordingly
         if (_layers[l]->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
             _layers[l]->_weights -= (this->config.learning_rate) * nabla_w[l];
+            _layers[l]->_bias  -= (this->config.learning_rate) * nabla_b[l];
 
         }
     }
@@ -254,9 +250,7 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
 
     std::cout << "Evaluating model... \n" << std::endl;
 
-    std::vector<size_t> shape({labels.shape()[0]});
-
-    tensor_t predictions(shape);
+    tensor_t predictions({labels.shape()});
 
     // iterate over the elements
     for (int idx = 0; idx < features.shape()[0]; idx++)  {
@@ -265,6 +259,8 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
         xt::view(predictions, idx, xt::all()) = this->predict(xt::view(features, idx, xt::all()));
 
     }
+
+    xt::check_dimension(labels.shape(), predictions.shape());
 
     return Score(labels, predictions);
 }
@@ -307,9 +303,10 @@ std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
 
     for (auto& layer : obj.layers()) {
 
-        os << "Layer '" << layer->name() << "': ";
-
-        utils::vprint(os, layer->shape());
+        os << "Layer" << std::endl;
+        os << "\tname: " << layer->name() << std::endl;
+        os << "\tsize: " << layer->size() << std::endl;
+        os << "\tshape: "; utils::vprint(os, layer->shape());
     }
 
     return os;
@@ -339,6 +336,8 @@ std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
 model::Score::Score(const tensor_t &labels,
                     const tensor_t &predictions,
                     const double& p) {
+
+    std::cout << xt::flatten(labels) << std::endl << xt::flatten(predictions) << std::endl;
 
     auto y_equal = xt::equal(predictions, labels);
 

@@ -50,21 +50,28 @@ namespace utils {
     template<typename T>
     void vprint(const T &v) {
 
-        std::cout << "{ ";
+        std::cout << "(";
         for (auto const& e: v) {
-            std::cout << " " << e << ",";
+            std::cout << e << ",";
         }
-        std::cout << " }" << std::endl;
+        std::cout << ")" << std::endl;
     }
 
     template<typename T>
     void vprint(std::ostream& os, const T &v) {
 
-        os << "{ ";
+        os << "(";
         for (auto const& e: v) {
-            os << " " << e << ",";
+            os << e << ",";
         }
-        os << " }" << std::endl;
+        os << ")" << std::endl;
+
+    }
+
+    template<typename T = xt::xarray<double>>
+    void print_shape(const T &e) {
+
+        vprint(e.shape());
 
     }
 

@@ -51,7 +51,7 @@ namespace model {
 
         size_t _size = 0;
 
-        tensor_t _biases;
+        tensor_t _bias;
         tensor_t _weights;
         tensor_t _activation;
 
@@ -83,6 +83,8 @@ namespace model {
         double learning_rate = 0.01;
         size_t batch_size = 30;
         size_t epochs = 10;
+
+        double tol = 1e-3;
 
         size_t log_step_count_steps = 5000;
 

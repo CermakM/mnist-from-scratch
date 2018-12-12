@@ -12,11 +12,14 @@
 
 
 #define DATA_DIR "data/"
+
 #define MNIST_DATA_DIR  "data/mnist/"
 #define TRAIN_IMAGES    "train-images-idx3-ubyte"
 #define TRAIN_LABELS    "train-labels-idx1-ubyte"
 #define TEST_IMAGES     "t10k-images-idx3-ubyte"
 #define TEST_LABELS     "t10k-labels-idx1-ubyte"
+
+#define MNIST_N_CLASSES 10
 
 
 template<typename FeatureT, typename LabelT>
@@ -69,7 +72,7 @@ namespace images {
         using namespace xt::placeholders;
 
         using fshape_t = xt::xshape<SIZEOF_FULL_DATASET, IMAGE_SIZE, IMAGE_SIZE>;
-        using lshape_t = xt::xshape<SIZEOF_FULL_DATASET>;
+        using lshape_t = xt::xshape<SIZEOF_FULL_DATASET, 1>;
 
         using FeatureTensor = xt::xtensor_fixed<double, fshape_t>;
         using LabelTensor = xt::xtensor_fixed<size_t, lshape_t>;

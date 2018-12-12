@@ -8,13 +8,14 @@ namespace ops {
 
     xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes) {
 
-        std::vector<size_t> shape ({tensor.shape()[0], n_classes});
+        auto tensor_flat = xt::flatten(tensor);
 
+        std::vector<size_t> shape ({tensor.shape()[0], n_classes, 1});
         xt::xarray<size_t> encoded_tensor = xt::zeros<size_t> (shape);
 
         for (int i = 0; i < tensor.size(); i++) {
 
-            encoded_tensor(i, static_cast<size_t> (tensor[i])) = 1;
+            xt::view(encoded_tensor, i, (size_t) tensor_flat[i]) = 1;
         }
 
         return encoded_tensor;
