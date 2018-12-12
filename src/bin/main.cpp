@@ -12,10 +12,10 @@ int main() {
     auto dataset = images::mnist::load_dataset();
 
     auto train_images = xt::view(
-            *dataset.features(), xt::range(0, 5000), xt::all());
+            *dataset.features(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET), xt::all());
 
     auto train_labels = xt::view(
-            *dataset.labels(), xt::range(0, 5000));
+            *dataset.labels(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET));
 
     // check
     std::cout << "Shape of train images: ";
@@ -29,7 +29,7 @@ int main() {
     model::MNISTConfig config;
     config.learning_rate = 3.0;
     config.batch_size = 30;
-    config.epochs = 5;
+    config.epochs = 3;
     config.loss = "quadratic";  // xent training not implemented yet
 
     std::cout << config << std::endl;
@@ -53,38 +53,26 @@ int main() {
     auto labels = ops::one_hot_encode(train_labels, 10);
 
     // fit the model
-//    model.fit(features, labels);
-
-    // test prediction
-    tensor_t y_ = model.predict(xt::view(features, 0));
-    tensor_t y_prob = model.predict_proba(xt::view(features, 0));
-
-    std::cout << "\nCheck: " << std::endl;
-
-    std::cout << y_ << std::endl;
-    std::cout << y_prob << std::endl;
-
-    std::cout << "True label: " << xt::view(labels, 0) << " | Prediction: " << y_ << std::endl;
+    model.fit(features, labels);
 
     // score the model
     tensor_t test_images = xt::view(
             *dataset.features(),
             xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
+//            xt::range(images::mnist::SIZEOF_TRAIN_DATASET, images::mnist::SIZEOF_TRAIN_DATASET + 10),
             xt::all()
     );
 
     tensor_t test_labels = xt::view(
             *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
-
-    utils::vprint(test_images.shape());
-    utils::vprint(test_labels.shape());
+//              *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, images::mnist::SIZEOF_TRAIN_DATASET + 10));
 
     // flatten and normalize train images
     auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784}) / 255;
 
     model::Score score = model.evaluate(
             test_features,
-            ops::one_hot_encode(test_labels, 10)
+            test_labels  // do not one-hot encode
     );
 
     std::cout << score << std::endl;

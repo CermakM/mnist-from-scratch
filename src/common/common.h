@@ -14,9 +14,15 @@
 // tensor operations
 #include "xtensor/xadapt.hpp"
 #include "xtensor/xarray.hpp"
+#include "xtensor/xexception.hpp"
 #include "xtensor/xio.hpp"
+#include "xtensor/xmath.hpp"
+#include "xtensor/xrandom.hpp"
+#include "xtensor/xreducer.hpp"
+#include "xtensor/xsort.hpp"
 #include "xtensor/xtensor.hpp"
 #include "xtensor/xview.hpp"
+
 
 // custom
 #include "exceptions.hpp"

@@ -148,9 +148,9 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
             tensor_t output = this->forward(xt::view(features, i));
             tensor_t target = xt::view(labels, i);
 
-            auto loss = compute_loss(output, target);
+            if (!((i * (epoch + 1) % this->config.log_step_count_steps))) {
+                auto loss = compute_loss(output, target);
 
-            if (!(i % 100)) {
                 std::cout << "Epoch: " << epoch << " Step: " << i * (epoch + 1) << std::endl;
                 std::cout << "Loss: " << loss << std::endl;
 
@@ -254,17 +254,19 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
 
     std::cout << "Evaluating model... \n" << std::endl;
 
-    tensor_t predictions({labels.shape()});
+    std::vector<size_t> shape({labels.shape()[0]});
 
-    std::transform(features.begin(), features.end(), predictions.begin(),
-                   [this] (auto& x) {return (double) this->predict(x)[0];});
+    tensor_t predictions(shape);
 
-    double n_total = labels.size();
-    double n_correct = xt::sum(xt::equal(predictions, labels))[0];
+    // iterate over the elements
+    for (int idx = 0; idx < features.shape()[0]; idx++)  {
 
-    double accuracy  = n_correct / n_total;
+        // assign predictions
+        xt::view(predictions, idx, xt::all()) = this->predict(xt::view(features, idx, xt::all()));
 
-    return Score {n_total, n_correct, accuracy};
+    }
+
+    return Score(labels, predictions);
 }
 
 
@@ -320,15 +322,32 @@ std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
             "-----------------\n"
 
             "\tCorrectly predicted: %d / %d\n"
-            "\tAccuracy: %d$.2f\n\n";
+            "\tAccuracy: %.2f +- %.4f";
 
     auto out = boost::format(fmt)
                % (int) obj.correct
                % (int) obj.total
-               % obj.accuracy;
+               % obj.accuracy
+               % obj.confidence_interval;
 
     os << boost::str(out) << std::endl;
 
     return os;
 
+}
+
+model::Score::Score(const tensor_t &labels,
+                    const tensor_t &predictions,
+                    const double& p) {
+
+    auto y_equal = xt::equal(predictions, labels);
+
+    this->total = labels.shape()[0];
+    this->correct = xt::sum(y_equal)[0];
+
+    this->accuracy  = ((double) correct / (double) total);
+
+    // TODO: compute z from p using ppf of a distribution
+    auto z = 1.96;
+    this->confidence_interval = (z * std::sqrt((accuracy * (1 - accuracy))) / total);
 }

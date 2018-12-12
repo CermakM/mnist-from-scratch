@@ -69,7 +69,7 @@ namespace images {
         using namespace xt::placeholders;
 
         using fshape_t = xt::xshape<SIZEOF_FULL_DATASET, IMAGE_SIZE, IMAGE_SIZE>;
-        using lshape_t = xt::xshape<SIZEOF_FULL_DATASET, 1>;
+        using lshape_t = xt::xshape<SIZEOF_FULL_DATASET>;
 
         using FeatureTensor = xt::xtensor_fixed<double, fshape_t>;
         using LabelTensor = xt::xtensor_fixed<size_t, lshape_t>;

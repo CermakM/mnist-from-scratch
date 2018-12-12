@@ -7,16 +7,10 @@
 
 #include <algorithm>
 
-#include "xtensor/xarray.hpp"
-#include "xtensor/xexception.hpp"
-#include "xtensor/xmath.hpp"
-#include "xtensor/xrandom.hpp"
-#include "xtensor/xreducer.hpp"
-#include "xtensor/xsort.hpp"
+#include "common/common.h"
+#include "common/utils.hpp"
 
 #include "xtensor-blas/xlinalg.hpp"
-
-#include "common/utils.hpp"
 
 
 using tensor_t = xt::xarray<double>;

@@ -14,10 +14,7 @@ using tensor_t = xt::xarray<double>;
 // forward declaration
 
 namespace model {
-    class Layer;
-    class MNISTConfig;
-    class MNISTModel;
-    class Score;
+    class Layer; struct MNISTConfig; class MNISTModel; class Score;
 }
 
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj);
@@ -29,13 +26,17 @@ std::ostream& operator<<(std::ostream& os, const model::Score& obj);
 
 namespace model {
 
-    struct Score {
+    class Score {
+    public:
 
-        const double total;
-        const double correct;
+        size_t total;
+        size_t correct;
 
-        const double accuracy;
-        const double standard_deviation;
+        double accuracy;
+        double confidence_interval;
+
+        Score() = default;
+        Score(const tensor_t &labels, const tensor_t &predictions, const double &p = 0.95);
     };
 
     enum LayerType {
@@ -77,14 +78,13 @@ namespace model {
         tensor_t& activate(const tensor_t &x);
     };
 
-    class MNISTConfig {
-    public:
-
-        explicit MNISTConfig() = default;
+    struct MNISTConfig {
 
         double learning_rate = 0.01;
         size_t batch_size = 30;
         size_t epochs = 10;
+
+        size_t log_step_count_steps = 5000;
 
         std::string loss = "quadratic";
     };
