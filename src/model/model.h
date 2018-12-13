@@ -16,6 +16,9 @@
 #include <xtensor/xjson.hpp>
 #include <nlohmann/json.hpp>
 
+#define DEFAULT_MODEL_DIR  "export"
+#define DEFAULT_MODEL_NAME "MNIST"
+
 using tensor_t = xt::xarray<double>;
 
 // forward declaration
@@ -96,6 +99,7 @@ namespace model {
         std::string loss = utils::getenv("LOSS", "quadratic");  // xent training not implemented yet
 
         int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "5000"));
+        int save_checkpoint_step = 60000;  // explicit, maybe allow modifying it later, but here it will equal to one epoch
     };
 
     class MNISTModel {

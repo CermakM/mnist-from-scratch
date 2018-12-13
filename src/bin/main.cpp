@@ -82,7 +82,8 @@ int main() {
 
     std::cout << score << std::endl;
 
-    model.export_model(utils::getenv("MODEL_DIR", "export"), utils::getenv("MODEL_NAME", "MNIST"));
+    model.export_model(utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR),
+                       utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME));
 
     return 0;
 }

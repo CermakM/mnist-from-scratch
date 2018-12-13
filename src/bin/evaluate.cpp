@@ -29,8 +29,8 @@ int main() {
     std::cout << "Shape of test labels: ";
     utils::vprint(test_labels.shape());
 
-    auto model = model::MNISTModel::load_model(utils::getenv("MODEL_DIR", "export"),
-                                               utils::getenv("MODEL_NAME", "MNIST"));
+    auto model = model::MNISTModel::load_model(utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR),
+                                               utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME));
 
     std::cout << model << std::endl;
 

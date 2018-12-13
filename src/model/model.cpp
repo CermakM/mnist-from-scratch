@@ -168,6 +168,7 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                 tensor_t output = this->forward(x);
                 tensor_t target = xt::view(labels, batch_idx);
 
+                // Monitor Loss
                 if (!(step % this->config.log_step_count_steps)) {
 
                     auto total_loss = compute_total_loss(features, labels, (size_t) batch_size);
@@ -184,6 +185,11 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                 }
 
                 this->back_prop(output, target, nabla_w, nabla_b);
+
+                // Checkpoint
+                if (!(step % this->config.save_checkpoint_step))
+                    export_model(utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR),
+                                 utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME));
 
                 step++;
 
@@ -425,11 +431,8 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
                                      ops::funct::sigmoid,
                                      ops::Initializer::PRETRAINED_WEIGHTS);
 
-        nlohmann::json weights_json = layer_spec.get<nlohmann::json>("weights");
-        xt::from_json(weights_json, layer->_weights);
-
-        nlohmann::json bias_json = layer_spec.get<nlohmann::json>("bias");
-        xt::from_json(bias_json, layer->_bias);
+        xt::from_json(layer_spec.get<nlohmann::json>("weights"), layer->_weights);
+        xt::from_json(layer_spec.get<nlohmann::json>("bias"), layer->_bias);
 
         model.add(layer);
 
