@@ -371,6 +371,8 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
 
     root.add_child("layers", layer_list);
 
+    root.put("is_fit", this->_is_fit);  // even unfitted models can be exported
+
     // create timestamped directory if not exists
 
     time_t t = std::time(nullptr);
@@ -393,12 +395,14 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
     namespace fs = boost::filesystem;
     namespace pt = boost::property_tree;
 
-    if (!fs::exists(model_dir))
-        throw FileNotExistsError(model_dir.c_str());
+    fs::path model_path = model_dir / (model_name + ".model");
+
+    if (!fs::exists(model_path))
+        throw FileNotExistsError(model_path.c_str());
 
     // load json file
     pt::ptree model_json;
-    pt::read_json((model_dir / (model_name + ".model")).c_str(), model_json);
+    pt::read_json(model_path.c_str(), model_json);
 
     auto config_spec = model_json.get_child("config");
     // load config
@@ -440,6 +444,8 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
     }
 
     model.compile();
+
+    model._is_fit = model_json.get<bool>("is_fit");
 
     return model;
 }

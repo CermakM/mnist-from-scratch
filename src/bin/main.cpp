@@ -28,26 +28,43 @@ int main() {
 
     std::cout << std::endl;
 
-    model::MNISTConfig config;
+    model::MNISTModel model;
 
-    // DEBUG
-    config.learning_rate = 3.0;
-    config.batch_size = 10;
-    config.epochs = 30;
-    config.loss = "quadratic";
+    if (utils::getenv("CONTINUE_TRAINING", "")) {
+        namespace fs = boost::filesystem;
 
-    config.log_step_count_steps = 10000;
+        fs::path model_dir = utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR);
+        std::string model_name = utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME);
 
-    std::cout << config << std::endl;
+        fs::path model_path = model_dir / (model_name + ".model");
+        if (!fs::exists(model_path))
+            std::cerr << "Model has not been found: path " << model_path << " does not exist." << std::endl;
+        else
+            model = model::MNISTModel::load_model(model_dir, model_name);
+    }
 
-    model::MNISTModel model(config);
+    if (!model.is_built()) {
 
-    // MLP train architecture
-    model.add(new model::Layer(784, "input", ops::identity, ops::Initializer::FROZEN_WEIGHTS));
-    model.add(new model::Layer(30,  "hidden_layer:1:sigmoid", ops::funct::sigmoid));
-    model.add(new model::Layer(10,  "output", ops::funct::sigmoid));
+        model::MNISTConfig config;
 
-    model.compile();
+        // DEBUG
+        config.learning_rate = 3.0;
+        config.batch_size = 10;
+        config.epochs = 30;
+        config.loss = "quadratic";
+
+        config.log_step_count_steps = 10000;
+
+        std::cout << config << std::endl;
+
+        // MLP train architecture
+        model.add(new model::Layer(784, "input", ops::identity, ops::Initializer::FROZEN_WEIGHTS));
+        model.add(new model::Layer(30,  "hidden_layer:1:sigmoid", ops::funct::sigmoid));
+        model.add(new model::Layer(10,  "output", ops::funct::sigmoid));
+
+        model.compile(config);
+
+    }
 
     std::cout << model << std::endl;
 
