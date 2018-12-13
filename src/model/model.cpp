@@ -91,6 +91,9 @@ model::MNISTModel& model::MNISTModel::compile() {
         return *this;
     }
 
+    if (_layers.empty())
+        std::cerr << "Model does not contain any layers. Use `model.add()` to add new layers." << std::endl;
+
     // input layer
     _layers[0]->_type = LayerType::INPUT_LAYER;
     _layers[0]->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // correct default
@@ -100,9 +103,9 @@ model::MNISTModel& model::MNISTModel::compile() {
 
         auto &layer = _layers[i];
 
-        std::vector<size_t> shape = {layer->size(), _layers[i - 1]->size()};
+        if (layer->_initializer == ops::Initializer::RANDOM_WEIGHT_INITIALIZER) {
 
-        if (layer->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
+            std::vector<size_t> shape = {layer->size(), _layers[i - 1]->size()};
 
             // randomly initialize weights and biases
             layer->_weights = xt::random::randn<double>(shape);
@@ -115,6 +118,8 @@ model::MNISTModel& model::MNISTModel::compile() {
     _layers.back()->_type = LayerType::OUTPUT_LAYER;
 
     this->_is_built = true;
+
+    return *this;
 }
 
 model::MNISTModel& model::MNISTModel::compile(const model::MNISTConfig &build_config) {
@@ -262,8 +267,8 @@ tensor_t model::MNISTModel::compute_loss(const tensor_t &output, const tensor_t 
 
 
 tensor_t model::MNISTModel::compute_total_loss(const tensor_t &features,
-                                             const tensor_t &labels,
-                                             const size_t& sample_size) {
+                                               const tensor_t &labels,
+                                               const size_t& sample_size) {
 
     // compute random sample loss from training data
     xt::xarray<int> sample_indices = xt::random::randint<int>({sample_size}, 0, features.shape()[0]);
@@ -319,7 +324,7 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
 }
 
 void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
-                                     const boost::filesystem::path model_name) {
+                                     const std::string& model_name) {
 
     namespace fs = boost::filesystem;
     namespace pt = boost::property_tree;
@@ -347,9 +352,8 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
         layer_node.put("size", layer->size());
 
         // export weights and biases as jsons and add them to the tree
-        nlohmann::json weights_json, bias_json;
-        xt::to_json(weights_json, layer->_weights);
-        xt::to_json(bias_json, layer->_bias);
+        nlohmann::json weights_json = layer->_weights;
+        nlohmann::json bias_json = layer->_bias;
 
         layer_node.put("weights", weights_json);
         layer_node.put("bias", bias_json);
@@ -361,18 +365,80 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
 
     root.add_child("layers", layer_list);
 
-    write_json("model.json", root);
+    // create timestamped directory if not exists
+
+    time_t t = std::time(nullptr);
+    uint32_t timestamp = static_cast<uint32_t>(t);
+
+    // create model dir if not exists
+    if (!fs::exists(model_dir))
+        fs::create_directory(model_dir);
+
+    // checkpoint
+    write_json((model_dir / (model_name + "." + std::to_string(timestamp) + ".checkpoint")).c_str(), root);
+
+    // final model
+    write_json((model_dir / (model_name + ".model")).c_str(), root);
 }
 
-model::MNISTModel& model::MNISTModel::load_model(const boost::filesystem::path model_dir) {
+model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path model_dir,
+                                                const std::string &model_name) {
 
     namespace fs = boost::filesystem;
+    namespace pt = boost::property_tree;
 
+    if (!fs::exists(model_dir))
+        throw FileNotExistsError(model_dir.c_str());
+
+    // load json file
+    pt::ptree model_json;
+    pt::read_json((model_dir / (model_name + ".model")).c_str(), model_json);
+
+    auto config_spec = model_json.get_child("config");
     // load config
+    MNISTConfig config {
+        config_spec.get<double>("learning_rate"),
+        config_spec.get<double>("tol"),
+        config_spec.get<int>("batch_size"),
+        config_spec.get<int>("epochs"),
+        config_spec.get<std::string>("loss"),
+        config_spec.get<int>("log_step_count_steps")
+    };
+
+    MNISTModel model (config);
 
     // load layers
+    int idx = 0;
+    for (const auto& layer_node : model_json.get_child("layers")) {
 
-    return *this;
+        const auto& layer_spec = layer_node.second;
+
+        Layer* layer;
+        if (!idx)
+            layer = new model::Layer(layer_spec.get<size_t>("size"),
+                                     layer_spec.get<std::string>("name"),
+                                     ops::identity,
+                                     ops::Initializer::FROZEN_WEIGHTS);
+        else
+            layer = new model::Layer(layer_spec.get<size_t>("size"),
+                                     layer_spec.get<std::string>("name"),
+                                     ops::funct::sigmoid,
+                                     ops::Initializer::PRETRAINED_WEIGHTS);
+
+        nlohmann::json weights_json = layer_spec.get<nlohmann::json>("weights");
+        xt::from_json(weights_json, layer->_weights);
+
+        nlohmann::json bias_json = layer_spec.get<nlohmann::json>("bias");
+        xt::from_json(bias_json, layer->_bias);
+
+        model.add(layer);
+
+        idx++;
+    }
+
+    model.compile();
+
+    return model;
 }
 
 
@@ -432,20 +498,21 @@ std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
             "\tAccuracy: %.2f +- %.4f";
 
     auto out = boost::format(fmt)
-               % (int) obj.correct
-               % (int) obj.total
+               % static_cast<int>(obj.correct)
+               % static_cast<int>(obj.total)
                % obj.accuracy
                % obj.confidence_interval;
 
     os << boost::str(out) << std::endl;
 
     return os;
-
 }
 
 model::Score::Score(const tensor_t &labels,
                     const tensor_t &predictions,
                     const double& p) {
+
+    std::ignore = p;
 
     auto y_equal = xt::equal(predictions, labels);
 

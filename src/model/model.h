@@ -13,8 +13,8 @@
 #include <boost/fusion/include/adapt_struct.hpp>
 
 #include <xtensor/xnpy.hpp>
-#include <nlohmann/json.hpp>
 #include <xtensor/xjson.hpp>
+#include <nlohmann/json.hpp>
 
 using tensor_t = xt::xarray<double>;
 
@@ -124,7 +124,7 @@ namespace model {
 
         void add(Layer* layer);
 
-        MNISTModel&  load_model(const boost::filesystem::path model_dir);
+        static MNISTModel load_model(const boost::filesystem::path model_dir, const std::string &model_name);
 
         MNISTModel& compile();
         MNISTModel& compile(const MNISTConfig& build_config);
@@ -149,7 +149,7 @@ namespace model {
         Score evaluate(const tensor_t& features, const tensor_t& labels);
 
         void export_model(const boost::filesystem::path model_dir,
-                          const boost::filesystem::path model_name);
+                          const std::string &model_name);
     };
 
 }

@@ -33,7 +33,7 @@ int main() {
     // DEBUG
     config.learning_rate = 3.0;
     config.batch_size = 10;
-    config.epochs = 1;
+    config.epochs = 30;
     config.loss = "quadratic";
 
     config.log_step_count_steps = 10000;

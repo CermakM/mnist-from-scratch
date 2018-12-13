@@ -19,7 +19,7 @@ using tensor_t = xt::xarray<double>;
 namespace ops {
 
     enum Initializer {
-        FROZEN_WEIGHTS = false, RANDOM_WEIGHT_INITIALIZER = true
+        FROZEN_WEIGHTS = 0, RANDOM_WEIGHT_INITIALIZER = 1, PRETRAINED_WEIGHTS = 2
     };
 
 

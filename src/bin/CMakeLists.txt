@@ -30,5 +30,7 @@ set(EXTRA_LIBS ${EXTRA_LIBS} dataset model cblas)
 include_directories("${PROJECT_SOURCE_DIR}/src")
 
 add_executable(mnist main.cpp)
+add_executable(mnist-evaluate evaluate.cpp)
 
 target_link_libraries(mnist ${EXTRA_LIBS} ${Boost_LIBRARIES})
+target_link_libraries(mnist-evaluate ${EXTRA_LIBS} ${Boost_LIBRARIES})

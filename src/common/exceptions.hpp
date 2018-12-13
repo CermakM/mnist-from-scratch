@@ -24,7 +24,7 @@ public:
 
     virtual const char * what() const throw() {
 
-        std::runtime_error("File "+ this->msg +" does not exist");
+        std::runtime_error("File or directory "+ this->msg +" does not exist");
     }
 };
 
