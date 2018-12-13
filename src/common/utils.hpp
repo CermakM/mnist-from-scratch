@@ -5,12 +5,14 @@
 #ifndef MNIST_FROM_SCRATCH_UTILS_H
 #define MNIST_FROM_SCRATCH_UTILS_H
 
+#include "exceptions.hpp"
+
 #include <fstream>
 #include <iostream>
 
-#include "xtensor/xcsv.hpp"
-
-#include "exceptions.hpp"
+#include <xtensor/xarray.hpp>
+#include <xtensor/xview.hpp>
+#include <xtensor/xcsv.hpp>
 
 
 namespace utils {

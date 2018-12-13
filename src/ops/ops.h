@@ -7,10 +7,10 @@
 
 #include <algorithm>
 
+#include <xtensor-blas/xlinalg.hpp>
+
 #include "common/common.h"
 #include "common/utils.hpp"
-
-#include "xtensor-blas/xlinalg.hpp"
 
 
 using tensor_t = xt::xarray<double>;

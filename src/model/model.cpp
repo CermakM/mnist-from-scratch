@@ -318,6 +318,63 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
     return Score(labels, predictions);
 }
 
+void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
+                                     const boost::filesystem::path model_name) {
+
+    namespace fs = boost::filesystem;
+    namespace pt = boost::property_tree;
+
+    pt::ptree root;
+
+    // export config
+    pt::ptree config_node;
+    config_node.put("learning_rate", config.learning_rate);
+    config_node.put("tol", config.tol);
+    config_node.put("batch_size", config.batch_size);
+    config_node.put("epochs", config.epochs);
+    config_node.put("loss", config.loss);
+    config_node.put("log_step_count_steps", config.log_step_count_steps);
+
+    root.add_child("config", config_node);
+
+    // export layers
+    pt::ptree layer_list;
+
+    for (const auto& layer : _layers) {
+        pt::ptree layer_node;
+
+        layer_node.put("name", layer->name());
+        layer_node.put("size", layer->size());
+
+        // export weights and biases as jsons and add them to the tree
+        nlohmann::json weights_json, bias_json;
+        xt::to_json(weights_json, layer->_weights);
+        xt::to_json(bias_json, layer->_bias);
+
+        layer_node.put("weights", weights_json);
+        layer_node.put("bias", bias_json);
+
+        layer_node.put("activation", "TODO"); // TODO: pass mapping to the activation
+
+        layer_list.push_back(std::make_pair("", layer_node));
+    }
+
+    root.add_child("layers", layer_list);
+
+    write_json("model.json", root);
+}
+
+model::MNISTModel& model::MNISTModel::load_model(const boost::filesystem::path model_dir) {
+
+    namespace fs = boost::filesystem;
+
+    // load config
+
+    // load layers
+
+    return *this;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 

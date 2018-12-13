@@ -5,6 +5,9 @@
 #ifndef MNIST_FROM_SCRATCH_EXCEPTIONS_H
 #define MNIST_FROM_SCRATCH_EXCEPTIONS_H
 
+#include <stdexcept>
+#include <string>
+
 
 class FileNotExistsError : public std::runtime_error {
 

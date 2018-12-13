@@ -8,6 +8,13 @@
 #include "common/common.h"
 #include "ops/ops.h"
 
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/fusion/include/adapt_struct.hpp>
+
+#include <xtensor/xnpy.hpp>
+#include <nlohmann/json.hpp>
+#include <xtensor/xjson.hpp>
 
 using tensor_t = xt::xarray<double>;
 
@@ -117,6 +124,8 @@ namespace model {
 
         void add(Layer* layer);
 
+        MNISTModel&  load_model(const boost::filesystem::path model_dir);
+
         MNISTModel& compile();
         MNISTModel& compile(const MNISTConfig& build_config);
 
@@ -129,8 +138,8 @@ namespace model {
         tensor_t compute_loss(const tensor_t& output, const tensor_t& target);
 
         tensor_t compute_total_loss(const tensor_t &features,
-                                  const tensor_t &labels,
-                                  const size_t &sample_size);
+                                    const tensor_t &labels,
+                                    const size_t &sample_size);
 
         void back_prop(const tensor_t &output,
                        const tensor_t &target,
@@ -138,6 +147,9 @@ namespace model {
                        std::vector<tensor_t>& nabla_b);
 
         Score evaluate(const tensor_t& features, const tensor_t& labels);
+
+        void export_model(const boost::filesystem::path model_dir,
+                          const boost::filesystem::path model_name);
     };
 
 }

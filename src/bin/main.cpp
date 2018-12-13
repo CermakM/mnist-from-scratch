@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include <dataset/dataset.h>
-#include <model/model.h>
+#include "dataset/dataset.h"
+#include "model/model.h"
 
 
 int main() {
@@ -32,8 +32,8 @@ int main() {
 
     // DEBUG
     config.learning_rate = 3.0;
-    config.batch_size = 30;
-    config.epochs = 10;
+    config.batch_size = 10;
+    config.epochs = 1;
     config.loss = "quadratic";
 
     config.log_step_count_steps = 10000;
@@ -58,7 +58,7 @@ int main() {
     auto labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
 
     // fit the model
-    model.fit(features, labels);
+//    model.fit(features, labels);
 
     // score the model
     tensor_t test_images = xt::view(
@@ -81,6 +81,8 @@ int main() {
     );
 
     std::cout << score << std::endl;
+
+    model.export_model(utils::getenv("MODEL_DIR", "export"), utils::getenv("MODEL_NAME", "MNIST"));
 
     return 0;
 }
