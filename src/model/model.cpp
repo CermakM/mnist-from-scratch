@@ -44,7 +44,7 @@ tensor_t& model::Layer::activate(const tensor_t &x) {
 
     if (this->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
-        ret = (xt::linalg::dot(this->_weights, x));
+        ret = (xt::linalg::dot(this->_weights, x) + this->_bias);
     }
 
     // apply and store activations
@@ -105,8 +105,8 @@ model::MNISTModel& model::MNISTModel::compile() {
         if (layer->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
             // randomly initialize weights and biases
-            layer->_bias  = xt::random::randn<double>({(int) shape[0], 1});
             layer->_weights = xt::random::randn<double>(shape);
+            layer->_bias  = xt::random::randn<double>({(int) layer->size(), 1});
 
         }
     }
@@ -126,41 +126,83 @@ model::MNISTModel& model::MNISTModel::compile(const model::MNISTConfig &build_co
 
 model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor_t &labels) {
 
-    std::cout << "Fitting model... \n" << std::endl;
-
-    double tol = this->config.tol;  // error tolerance -- stop condition
-
     xt::check_dimension(features.shape(), labels.shape());
 
+    std::cout << "Fitting model... \n" << std::endl;
+
+    const int &batch_size = config.batch_size;
+
+    int step = 0;
+
+    const double &tol = this->config.tol;  // error tolerance -- stop condition
+
+    // train epochs
     for (int epoch = 1; epoch < this->config.epochs + 1; epoch++) {
 
-        // single sample  TODO: work with mini-batches, this is slow and inefficient
+        // TODO: shuffle
 
-        for (int i = 0; i < features.shape()[0]; i++) {
+        // iterate over mini-batches in the training set
+        for (int batch_idx = 0; batch_idx < features.shape()[0] - batch_size; batch_idx += batch_size) {
 
-            auto x = xt::view(features, i, xt::all());
+            // gradient vectors
+            std::vector<tensor_t> nabla_b;
+            std::vector<tensor_t> nabla_w;
 
-            tensor_t output = this->forward(x);
-            tensor_t target = xt::view(labels, i, xt::all());
+            // initialize gradient vectors
+            for (auto &_layer : _layers) {
 
-            if (!((i * (epoch) % this->config.log_step_count_steps))) {
-                auto loss = compute_loss(output, target);
-
-                std::cout << "Epoch: " << epoch << std::endl;
-                std::cout << "Step:  " << i + (int(features.shape()[0]) * epoch) << std::endl;
-                std::cout << "\nLoss:  " << loss << std::endl;
-
-                std::cout << "\n---\n" << std::endl;
-
-                if (xt::all(loss < tol)) {
-                    std::cerr << "Tolerance reached. Early stopping." << std::endl;
-
-                    break;
-                }
+                nabla_w.emplace_back(xt::zeros<double>(_layer->_weights.shape()));
+                nabla_b.emplace_back(xt::zeros<double>(_layer->_bias.shape()));
             }
 
-            this->back_prop(output, target);
+            // mini-batch update
+            for (int i = batch_idx; i < batch_idx + batch_size; i++) {
+
+                const tensor_t x = xt::view(features, batch_idx);
+
+                tensor_t output = this->forward(x);
+                tensor_t target = xt::view(labels, batch_idx);
+
+                if (!(step % this->config.log_step_count_steps)) {
+
+                    auto total_loss = compute_total_loss(features, labels, (size_t) batch_size);
+
+                    std::cout << "Epoch: " << epoch << std::endl;
+                    std::cout << "Step:  " << step << std::endl;
+                    std::cout << "\nLoss:  " << total_loss << std::endl;
+
+                    if (xt::all(total_loss < tol)) {
+                        std::cerr << "Tolerance reached. Early stopping." << std::endl;
+
+                        break;
+                    }
+                }
+
+                this->back_prop(output, target, nabla_w, nabla_b);
+
+                step++;
+
+            }  // EOF mini-batch
+
+            // update weights accordingly
+            for (int i = 0; i < _layers.size() - 1; i++) {
+
+                size_t l = _layers.size() - 1 - i;
+
+                if (_layers[l]->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
+
+                    _layers[l]->_weights -= (
+                            (this->config.learning_rate / batch_size) * nabla_w[l]);
+                    _layers[l]->_bias  -= (
+                            (this->config.learning_rate / batch_size) * nabla_b[l]);
+
+                }
+
+            }  // EOF update weights
+
         }
+
+        // EOF epoch
     }
 
     this->_is_fit = true;
@@ -181,20 +223,12 @@ tensor_t model::MNISTModel::forward(const tensor_t &x) {
     return res;
 }
 
-void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target) {
+void model::MNISTModel::back_prop(const tensor_t &output,
+                                  const tensor_t &target,
+                                  std::vector<tensor_t>& nabla_w,
+                                  std::vector<tensor_t>& nabla_b) {
 
     size_t L = _layers.size() - 1;
-
-    // gradient vectors
-    std::vector<tensor_t> nabla_w;
-    std::vector<tensor_t> nabla_b;
-
-    // initialize gradient vectors
-    for (auto &_layer : _layers) {
-
-        nabla_w.emplace_back(xt::zeros<double>(_layer->_bias.shape()));
-        nabla_b.emplace_back(xt::zeros<double>(_layer->_weights.shape()));
-    }
 
     tensor_t z;
     tensor_t delta;
@@ -204,7 +238,7 @@ void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target
 
         size_t l = L - i;
 
-        z = xt::linalg::dot(_layers[l]->_weights, _layers[l - 1]->_activation);
+        z = xt::linalg::dot(_layers[l]->_weights, _layers[l - 1]->_activation) + _layers[l]->_bias;
 
         if ( l < L) {
             delta = (xt::linalg::dot(xt::transpose(_layers[l + 1]->_weights), delta) * _layers[l]->_transfer_gradient(z));
@@ -214,16 +248,8 @@ void model::MNISTModel::back_prop(const tensor_t &output, const tensor_t &target
         }
 
         // the gradient with respect to the weights
-        nabla_b[l] = delta;
-        nabla_w[l] = xt::linalg::dot(delta, xt::transpose(_layers[l-1]->_activation));
-
-        // adjust weights accordingly
-        if (_layers[l]->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
-
-            _layers[l]->_weights -= (this->config.learning_rate) * nabla_w[l];
-            _layers[l]->_bias  -= (this->config.learning_rate) * nabla_b[l];
-
-        }
+        nabla_w[l] += xt::linalg::dot(delta, xt::transpose(_layers[l-1]->_activation));
+        nabla_b[l] += delta;
     }
 }
 
@@ -232,6 +258,33 @@ tensor_t model::MNISTModel::compute_loss(const tensor_t &output, const tensor_t 
 
     return this->_loss_function(output, target);
 
+}
+
+
+tensor_t model::MNISTModel::compute_total_loss(const tensor_t &features,
+                                             const tensor_t &labels,
+                                             const size_t& sample_size) {
+
+    // compute random sample loss from training data
+    xt::xarray<int> sample_indices = xt::random::randint<int>({sample_size}, 0, features.shape()[0]);
+
+    std::vector<size_t> shape = {sample_size};
+    tensor_t loss(shape);
+
+    for (int k = 0; k < sample_size; k++) {
+
+        // sample index
+        int idx = xt::view(sample_indices, k)(0);
+
+        tensor_t x_ = xt::view(features, idx);
+
+        tensor_t a_ = this->forward(x_);
+        tensor_t y_ = xt::view(labels, idx);
+
+        xt::view(loss, k) = compute_loss(a_, y_);
+    }
+
+    return xt::mean(loss);
 }
 
 tensor_t model::MNISTModel::predict(const tensor_t &x) {
@@ -336,8 +389,6 @@ std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
 model::Score::Score(const tensor_t &labels,
                     const tensor_t &predictions,
                     const double& p) {
-
-    std::cout << xt::flatten(labels) << std::endl << xt::flatten(predictions) << std::endl;
 
     auto y_equal = xt::equal(predictions, labels);
 

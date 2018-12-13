@@ -34,6 +34,22 @@ namespace ops {
         return ret / xt::sum(ret);
     }
 
+    tensor_t norm2d(const tensor_t &x) {
+
+        // get the min and max
+        auto minmax =  std::minmax_element(x.begin(), x.end());
+        const auto norm_coef = (*minmax.second) - (*minmax.first);
+
+        // apply norm
+        tensor_t x_norm (x.shape());
+
+        auto normalize = [norm_coef] (auto& x) {return x / norm_coef;};
+
+        std::transform(x.begin(), x.end(), x_norm.begin(), normalize);
+
+        return x_norm;
+    }
+
 
     namespace funct {
 
@@ -72,7 +88,7 @@ namespace ops {
 
             xt::check_dimension(output.shape(), target.shape());
 
-            return xt::sum(xt::pow(target - output, 2)) / 2;
+            return (0.5 * xt::sum(xt::pow(xt::flatten(output - target), 2)));
         }
     }
 
@@ -101,7 +117,8 @@ namespace ops {
             // unused
             std::ignore = z;
 
-            return (output - target);
+            // TODO: derivative of softmax ??
+            return (output - target);  // includes derivative of sigmoid
         }
     }
 }

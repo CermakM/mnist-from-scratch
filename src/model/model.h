@@ -80,15 +80,15 @@ namespace model {
 
     struct MNISTConfig {
 
-        double learning_rate = 0.01;
-        size_t batch_size = 30;
-        size_t epochs = 10;
-
+        double learning_rate = std::stod(utils::getenv("LEARNING_RATE", "3.0"));
         double tol = 1e-3;
 
-        size_t log_step_count_steps = 5000;
+        int batch_size = std::stoi(utils::getenv("BATCH_SIZE", "30"));
+        int epochs = std::stoi(utils::getenv("EPOCHS", "5"));
 
-        std::string loss = "quadratic";
+        std::string loss = utils::getenv("LOSS", "quadratic");  // xent training not implemented yet
+
+        int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "5000"));
     };
 
     class MNISTModel {
@@ -128,7 +128,14 @@ namespace model {
         tensor_t forward(const tensor_t &x);
         tensor_t compute_loss(const tensor_t& output, const tensor_t& target);
 
-        void back_prop(const tensor_t &output, const tensor_t &target);
+        tensor_t compute_total_loss(const tensor_t &features,
+                                  const tensor_t &labels,
+                                  const size_t &sample_size);
+
+        void back_prop(const tensor_t &output,
+                       const tensor_t &target,
+                       std::vector<tensor_t>& nabla_w,
+                       std::vector<tensor_t>& nabla_b);
 
         Score evaluate(const tensor_t& features, const tensor_t& labels);
     };

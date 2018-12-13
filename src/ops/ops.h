@@ -39,12 +39,7 @@ namespace ops {
             const xt::xtensor_fixed<double, xt::xshape<2>> &pool_size
     );
 
-    template<typename T>
-    tensor_t norm2d(const T& tensor) {
-
-        return tensor / (xt::amax(tensor) - xt::amin(tensor));  // very simple normalization
-
-    }
+    tensor_t norm2d(const tensor_t& x);
 
     xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes);
 
