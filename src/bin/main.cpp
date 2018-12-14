@@ -79,27 +79,31 @@ int main() {
     // fit the model
     model.fit(features, labels);
 
-    // score the model
-    auto test_images = xt::view(
-            *dataset.features(),
-            xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
-//            xt::range(0, 100),
-            xt::all()
-    );
+    if (std::stoi(utils::getenv("EVALUATE", "1"))) {
 
-    auto test_labels = xt::view(
-            *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
-//              *dataset.labels(), xt::range(0, 100));
+        // score the model
+        auto test_images = xt::view(
+                *dataset.features(),
+                xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
+    //            xt::range(0, 100),
+                xt::all()
+        );
 
-    // flatten and normalize train images
-    auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784, 1});
+        auto test_labels = xt::view(
+                *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
+    //              *dataset.labels(), xt::range(0, 100));
 
-    model::Score score = model.evaluate(
-            ops::norm2d(test_features),
-            test_labels  // do not one-hot encode
-    );
+        // flatten and normalize train images
+        auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784, 1});
 
-    std::cout << score << std::endl;
+        model::Score score = model.evaluate(
+                ops::norm2d(test_features),
+                test_labels  // do not one-hot encode
+        );
+
+        std::cout << score << std::endl;
+
+    }
 
     model.export_model(utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR),
                        utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME));
