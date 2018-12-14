@@ -7,6 +7,9 @@
 int main() {
     std::cout << "Loading MNIST dataset... \n" << std::endl;
 
+    // download dataset (if applicable)
+    images::mnist::maybe_download();
+
     // load dataset
 
     auto dataset = images::mnist::load_dataset();
@@ -75,7 +78,7 @@ int main() {
     auto labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
 
     // fit the model
-//    model.fit(features, labels);
+    model.fit(features, labels);
 
     // score the model
     tensor_t test_images = xt::view(

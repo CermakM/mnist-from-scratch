@@ -49,8 +49,43 @@ images::mnist::MNISTDataset images::mnist::load_dataset() {
 }
 
 
-void images::mnist::download(const std::string &out_dir) {
+int images::mnist::maybe_download() {
 
+    namespace fs = boost::filesystem;
+
+    std::string out_dir = utils::getenv("MNIST_DATA_DIR", MNIST_DATA_DIR);
+
+    std::cout << "Downloading MNIST dataset..." << std::endl;
+    std::cout << "MNIST data directory: " << out_dir << std::endl;
+
+    if (fs::exists(out_dir)) {
+        std::cerr << "Directory already exists. Skipping." << std::endl;
+        return 1;
+    }
+
+    std::string download_train_images = "wget -nc http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz -P";
+    std::string download_train_labels = "wget -nc http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz -P" ;
+    std::string download_test_images = "wget -nc http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz -P";
+    std::string download_test_labels = "wget -nc http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz -P";
+
+    std::cerr << "Downloading train images" << std::endl;
+    system((download_train_images + out_dir).c_str());
+
+    std::cerr << "Downloading train labels" << std::endl;
+    system((download_train_labels + out_dir).c_str());
+
+    std::cerr << "Downloading test images" << std::endl;
+    system((download_test_images + out_dir).c_str());
+
+    std::cerr << "Downloading test labels" << std::endl;
+    system((download_test_labels + out_dir).c_str());
+
+    std::cerr << "Unzipping" << std::endl;
+    std::string unzip_command = "pushd " + out_dir;
+    unzip_command += " && gunzip *.gz";
+    unzip_command += " && popd";
+
+    return system(unzip_command.c_str());
 }
 
 

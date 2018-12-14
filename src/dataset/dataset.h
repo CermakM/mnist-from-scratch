@@ -93,9 +93,9 @@ namespace images {
          *
          * NOTE: If data is already present, does not overwrite existing files.
          *
-         * @param out_dir directory to save data files to [default="data/"]
+         * @param out_dir directory to save data files to [default="data/mnist"]
          */
-        void download(const std::string &out_dir = MNIST_DATA_DIR);
+        int maybe_download();
 
 
         /**
