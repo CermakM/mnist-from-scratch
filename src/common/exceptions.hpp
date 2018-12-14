@@ -8,23 +8,29 @@
 #include <stdexcept>
 #include <string>
 
+#include <boost/filesystem.hpp>
 
-class FileNotExistsError : public std::runtime_error {
+class FileNotExistsError : public std::exception {
 
-    std::string msg = nullptr;
+protected:
+    std::string _msg;
 
 public:
 
-    explicit FileNotExistsError(const std::string &error_msg)
-            : std::runtime_error("FileNotExistsError") {
+    explicit FileNotExistsError(const boost::filesystem::path &fname)
+            : _msg(fname.c_str()) {}
 
-        this->msg = error_msg;
+    explicit FileNotExistsError(const std::string &fname)
+            : _msg(fname) {}
 
-    }
+    explicit FileNotExistsError(const char* fname)
+            : _msg(fname) {}
 
-    virtual const char * what() const throw() {
+    virtual ~FileNotExistsError() noexcept {}
 
-        std::runtime_error("File or directory "+ this->msg +" does not exist");
+    virtual const char * what() const noexcept {
+
+        return this->_msg.c_str();
     }
 };
 

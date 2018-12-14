@@ -80,14 +80,14 @@ int main() {
     model.fit(features, labels);
 
     // score the model
-    tensor_t test_images = xt::view(
+    auto test_images = xt::view(
             *dataset.features(),
             xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
 //            xt::range(0, 100),
             xt::all()
     );
 
-    tensor_t test_labels = xt::view(
+    auto test_labels = xt::view(
             *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
 //              *dataset.labels(), xt::range(0, 100));
 

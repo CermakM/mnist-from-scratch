@@ -316,12 +316,8 @@ model::Score model::MNISTModel::evaluate(const tensor_t &features, const tensor_
 
     tensor_t predictions({labels.shape()});
 
-    // iterate over the elements
     for (int idx = 0; idx < features.shape()[0]; idx++)  {
-
-        // assign predictions
         xt::view(predictions, idx, xt::all()) = this->predict(xt::view(features, idx, xt::all()));
-
     }
 
     xt::check_dimension(labels.shape(), predictions.shape());

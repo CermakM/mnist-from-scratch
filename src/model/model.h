@@ -93,12 +93,12 @@ namespace model {
         double learning_rate = std::stod(utils::getenv("LEARNING_RATE", "3.0"));
         double tol = 1e-3;
 
-        int batch_size = std::stoi(utils::getenv("BATCH_SIZE", "30"));
-        int epochs = std::stoi(utils::getenv("EPOCHS", "5"));
+        int batch_size = std::stoi(utils::getenv("BATCH_SIZE", "10"));
+        int epochs = std::stoi(utils::getenv("EPOCHS", "30"));
 
         std::string loss = utils::getenv("LOSS", "quadratic");  // xent training not implemented yet
 
-        int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "5000"));
+        int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "30000"));
         int save_checkpoint_step = 60000;  // explicit, maybe allow modifying it later, but here it will equal to one epoch
     };
 
