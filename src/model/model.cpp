@@ -57,21 +57,10 @@ tensor_t& model::Layer::activate(const tensor_t &x) {
 
 // MNISTModel
 
+
 model::MNISTModel::MNISTModel(model::MNISTConfig &config) {
 
     this->config = config;
-
-    if (this->config.loss == "categorical_cross_entropy") {
-
-        this->_loss_function = ops::loss::categorical_cross_entropy;
-        this->_loss_gradient = ops::diff::categorical_cross_entropy_;
-
-    } else {
-
-        this->_loss_function = ops::loss::quadratic;
-        this->_loss_gradient = ops::diff::quadratic_;
-    }
-
 }
 
 void model::MNISTModel::add(model::Layer* layer) {
@@ -83,6 +72,8 @@ void model::MNISTModel::add(model::Layer* layer) {
 model::MNISTModel& model::MNISTModel::compile() {
 
     std::cout << "Compiling model... \n" << std::endl;
+
+    this->set_loss();
 
     if (this->_is_built) {
 
@@ -171,7 +162,7 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                 // Monitor Loss
                 if (!(step % this->config.log_step_count_steps)) {
 
-                    auto total_loss = compute_total_loss(features, labels, (size_t) batch_size);
+                    auto total_loss = this->compute_total_loss(features, labels, (size_t) batch_size);
 
                     std::cout << "Epoch: " << epoch << std::endl;
                     std::cout << "Step:  " << step << std::endl;
@@ -232,6 +223,28 @@ tensor_t model::MNISTModel::forward(const tensor_t &x) {
     }
 
     return res;
+}
+
+void model::MNISTModel::set_loss(const std::string &loss) {
+
+    this->config.loss = loss;
+
+    if (loss == "categorical_cross_entropy") {
+
+        this->_loss_function = ops::loss::categorical_cross_entropy;
+        this->_loss_gradient = ops::diff::categorical_cross_entropy_;
+
+    } else {
+
+        this->_loss_function = ops::loss::quadratic;
+        this->_loss_gradient = ops::diff::quadratic_;
+    }
+}
+
+void model::MNISTModel::set_loss() {
+
+    this->set_loss(this->config.loss);
+
 }
 
 void model::MNISTModel::back_prop(const tensor_t &output,
@@ -447,6 +460,35 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
 }
 
 
+model::Score::Score(const tensor_t &labels,
+                    const tensor_t &predictions,
+                    const double& p) {
+    std::cout << "Creating score" << std::endl;
+
+    utils::print_shape(labels);
+    utils::print_shape(predictions);
+
+    std::ignore = p; // ignore for now
+
+    auto y_equal = xt::equal(predictions, labels);
+
+    this->total = labels.shape()[0];
+
+    std::cout << y_equal << std::endl;
+    utils::print_shape(y_equal);
+
+    std::cout << xt::sum(y_equal) << std::endl;
+
+    this->correct = xt::sum(y_equal)[0];
+
+    this->accuracy  = ((double) correct / (double) total);
+
+    // TODO: compute z from p using ppf of a distribution
+    auto z = 1.96;
+    this->confidence_interval = (z * std::sqrt((accuracy * (1 - accuracy))) / total);
+}
+
+
 std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 
     std::string fmt =
@@ -472,6 +514,7 @@ std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 
 }
 
+
 std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
 
     if (!obj.is_built()) {
@@ -493,6 +536,7 @@ std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
     return os;
 }
 
+
 std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
 
     std::string fmt =
@@ -511,22 +555,4 @@ std::ostream &operator<<(std::ostream &os, const model::Score &obj) {
     os << boost::str(out) << std::endl;
 
     return os;
-}
-
-model::Score::Score(const tensor_t &labels,
-                    const tensor_t &predictions,
-                    const double& p) {
-
-    std::ignore = p;
-
-    auto y_equal = xt::equal(predictions, labels);
-
-    this->total = labels.shape()[0];
-    this->correct = xt::sum(y_equal)[0];
-
-    this->accuracy  = ((double) correct / (double) total);
-
-    // TODO: compute z from p using ppf of a distribution
-    auto z = 1.96;
-    this->confidence_interval = (z * std::sqrt((accuracy * (1 - accuracy))) / total);
 }

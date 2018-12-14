@@ -139,8 +139,11 @@ namespace model {
         tensor_t predict_proba(const tensor_t& x);
 
         tensor_t forward(const tensor_t &x);
-        tensor_t compute_loss(const tensor_t& output, const tensor_t& target);
 
+        void set_loss(const std::string &loss);
+        void set_loss();
+
+        tensor_t compute_loss(const tensor_t& output, const tensor_t& target);
         tensor_t compute_total_loss(const tensor_t &features,
                                     const tensor_t &labels,
                                     const size_t &sample_size);

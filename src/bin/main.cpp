@@ -10,6 +10,8 @@ int main() {
     // download dataset (if applicable)
     images::mnist::maybe_download();
 
+    std::cout << std::endl;
+
     // load dataset
 
     auto dataset = images::mnist::load_dataset();
@@ -79,7 +81,7 @@ int main() {
     // fit the model
     model.fit(features, labels);
 
-    if (std::stoi(utils::getenv("EVALUATE", "1"))) {
+    if (std::stoi(utils::getenv("EVALUATE", "0"))) {
 
         // score the model
         auto test_images = xt::view(
