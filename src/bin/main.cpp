@@ -50,7 +50,6 @@ int main() {
 
         model::MNISTConfig config;
 
-        // DEBUG
         config.learning_rate = 3.0;
         config.batch_size = 10;
         config.epochs = 30;

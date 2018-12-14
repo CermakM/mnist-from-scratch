@@ -34,3 +34,17 @@ add_executable(mnist-evaluate evaluate.cpp)
 
 target_link_libraries(mnist ${EXTRA_LIBS} ${Boost_LIBRARIES})
 target_link_libraries(mnist-evaluate ${EXTRA_LIBS} ${Boost_LIBRARIES})
+
+
+# make links in the source directory to the built executables
+add_custom_command(TARGET mnist POST_BUILD
+    COMMAND ln -sfn build/src/bin/mnist mnist
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMENT "Creating link to executable `build/src/bin/mnist` ..."
+)
+
+add_custom_command(TARGET mnist-evaluate POST_BUILD
+    COMMAND ln -sfn build/src/bin/mnist-evaluate mnist-evaluate
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    COMMENT "Creating link to executable `build/src/bin/mnist-evaluate` ..."
+)
