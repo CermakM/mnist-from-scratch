@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.8)
 enable_language(CXX)
 
 
-set(ANACONDA_PATH /home/macermak/anaconda3)
+set(ANACONDA_PATH $ENV{CONDA_PREFIX})
 
 
 include_directories(${ANACONDA_PATH}/include)
