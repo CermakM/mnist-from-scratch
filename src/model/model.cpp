@@ -156,9 +156,9 @@ tensor_t model::MNISTModel::forward(const tensor_t &x) {
     return res;
 }
 
-model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor_t &labels) {
+model::MNISTModel& model::MNISTModel::fit(const tensor_t &X, const tensor_t &y) {
 
-    xt::check_dimension(features.shape(), labels.shape());
+    xt::check_dimension(X.shape(), y.shape());
 
     std::cout << "Fitting model... \n" << std::endl;
 
@@ -168,37 +168,46 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
 
     const double &tol = this->config.tol;  // error tolerance -- stop condition
 
+    xt::xarray<size_t> shuffle_indices = xt::arange(y.shape()[0]);
+
+    // gradient vectors
+    std::vector<tensor_t> nabla_w, nabla_b;
+
+    // initialize gradient vectors for the current batch
+    for (const auto& layer: _layers) {
+
+        nabla_w.emplace_back(xt::zeros<double>(layer->_weights.shape()));
+        nabla_b.emplace_back(xt::zeros<double>(layer->_bias.shape()));
+    }
+
     // train epochs
     for (int epoch = 1; epoch < this->config.epochs + 1; epoch++) {
 
-        // TODO: shuffle
+        // set seed to preserve order for both X and y
+        xt::random::seed(epoch);
+        xt::random::shuffle(shuffle_indices);
+
 
         // iterate over mini-batches in the training set
-        for (int batch_idx = 0; batch_idx < features.shape()[0] - batch_size; batch_idx += batch_size) {
+        for (int batch = 0; batch < X.shape()[0] - batch_size; batch += batch_size) {            // mini-batch update
 
-            // gradient vectors
-            std::vector<tensor_t> nabla_b;
-            std::vector<tensor_t> nabla_w;
-
-            // initialize gradient vectors
-            for (auto &_layer : _layers) {
-
-                nabla_w.emplace_back(xt::zeros<double>(_layer->_weights.shape()));
-                nabla_b.emplace_back(xt::zeros<double>(_layer->_bias.shape()));
+            // set to zero for each mini batch
+            for (size_t l = 0; l < _layers.size(); l++) {
+                std::fill(nabla_w[l].begin(), nabla_w[l].end(), 0);
+                std::fill(nabla_b[l].begin(), nabla_b[l].end(), 0);
             }
 
-            // mini-batch update
-            for (int i = batch_idx; i < batch_idx + batch_size; i++) {
+            for (int batch_idx = batch; batch_idx < batch + batch_size; batch_idx++) {
 
-                const tensor_t x = xt::view(features, batch_idx);
+                size_t idx = xt::view(shuffle_indices, batch_idx)(0);
 
-                tensor_t output = this->forward(x);
-                tensor_t target = xt::view(labels, batch_idx);
+                tensor_t output = this->forward(xt::view(X, idx));
+                tensor_t target = xt::view(y, idx);
 
                 // Monitor Loss
                 if (!(step % this->config.log_step_count_steps)) {
 
-                    const tensor_t &total_loss = this->compute_total_loss(features, labels, (size_t) batch_size);
+                    const tensor_t &total_loss = this->compute_total_loss(X, y, (size_t) batch_size);
 
                     std::cout << "Epoch: " << epoch << std::endl;
                     std::cout << "Step:  " << step << std::endl;
@@ -211,9 +220,10 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                     }
                 }
 
+                // back propagate
                 this->back_prop(output, target, nabla_w, nabla_b);
 
-                // Checkpoint
+                // checkpoint
                 if (!(step % this->config.save_checkpoint_step))
                     export_model(utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR),
                                  utils::getenv("MODEL_NAME", DEFAULT_MODEL_NAME));

@@ -58,9 +58,9 @@ int main() {
         std::cout << config << std::endl;
 
         // MLP train architecture
-        model.add(new model::Layer(784, "input", ops::identity, ops::Initializer::FROZEN_WEIGHTS));
+        model.add(new model::Layer(784, "input:identity", ops::identity, ops::Initializer::FROZEN_WEIGHTS));
         model.add(new model::Layer(30,  "hidden_layer:1:sigmoid", ops::funct::sigmoid));
-        model.add(new model::Layer(10,  "output", ops::funct::sigmoid));
+        model.add(new model::Layer(10,  "output:sigmoid", ops::funct::sigmoid));
 
         model.compile(config);
 

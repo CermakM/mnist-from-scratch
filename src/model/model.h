@@ -140,7 +140,7 @@ namespace model {
         MNISTModel& compile();
         MNISTModel& compile(const MNISTConfig& build_config);
 
-        MNISTModel& fit(const tensor_t& features, const tensor_t& labels);
+        MNISTModel& fit(const tensor_t& X, const tensor_t& y);
 
         tensor_t predict(const tensor_t& x);
         tensor_t predict_proba(const tensor_t& x);
