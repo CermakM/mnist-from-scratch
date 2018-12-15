@@ -14,6 +14,7 @@
 
 #include <xtensor/xnpy.hpp>
 #include <xtensor/xjson.hpp>
+#include <xtensor/xindex_view.hpp>
 #include <nlohmann/json.hpp>
 
 #define DEFAULT_MODEL_DIR  "export"
@@ -96,7 +97,7 @@ namespace model {
     struct MNISTConfig {
 
         double learning_rate = std::stod(utils::getenv("LEARNING_RATE", "3.0"));
-        double momentum_factor =  std::stod(utils::getenv("MOMENTUM_FACTOR", "0.5"));
+        double momentum_factor =  std::stod(utils::getenv("MOMENTUM_FACTOR", "0.25"));
 
         double tol = 1e-3;
 
@@ -106,6 +107,7 @@ namespace model {
         std::string loss = utils::getenv("LOSS", "mse");  // set LOSS="categorical_cross_entropy" for xent loss
 
         int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "15000"));
+        int validate_step_count_epochs = std::stoi(utils::getenv("VALIDATE_STEP_COUNT_EPOCHS", "5"));  // how many checkpoints to keep
 
         int save_checkpoint_step = std::stoi(utils::getenv("SAVE_CHECKPOINT_STEP", "60000"));
         int keep_checkpoint_max = std::stoi(utils::getenv("KEEP_CHECKPOINTS_MAX", "5"));  // how many checkpoints to keep

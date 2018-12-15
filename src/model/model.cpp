@@ -255,6 +255,28 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &X, const tensor_t &y) 
             }
             // EOF mini-batch
         }
+
+        // validation
+        if (!(epoch % this->config.validate_step_count_epochs)) {
+
+            size_t sample_size = std::min<size_t>(10000, X.shape()[0]);  // somewhat representative sample
+
+            const xt::xarray<size_t> &validation_sample_indicies = xt::random::choice(shuffle_indices, sample_size);
+
+            tensor_t X_val = xt::empty<double>({static_cast<int>(sample_size), 784, 1});  // cheat a little bit with some magic numbers
+            tensor_t y_val = xt::empty<double>({static_cast<int>(sample_size), 1});
+
+            int idx = 0;
+            for (const auto& sample_idx : validation_sample_indicies){
+                xt::view(X_val, idx) = xt::view(X, sample_idx);
+                xt::view(y_val, idx) = xt::argmax(xt::view(y, sample_idx));
+                idx++;
+            }
+
+            std::cout << this->evaluate(X_val, y_val) << std::endl;;
+
+        }
+
         // EOF epoch
     }
 
@@ -371,6 +393,7 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
     config_node.put("train_epochs", config.train_epochs);
     config_node.put("loss", config.loss);
     config_node.put("log_step_count_steps", config.log_step_count_steps);
+    config_node.put("validate_step_count_epochs", config.validate_step_count_epochs);
     config_node.put("save_checkpoint_step", config.save_checkpoint_step);
     config_node.put("keep_checkpoint_max", config.keep_checkpoint_max);
 
@@ -459,6 +482,7 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
         config_spec.get<int>("train_epochs"),
         config_spec.get<std::string>("loss"),
         config_spec.get<int>("log_step_count_steps"),
+        config_spec.get<int>("validate_step_count_epochs"),
         config_spec.get<int>("save_checkpoint_step"),
         config_spec.get<int>("keep_checkpoint_max")
     };

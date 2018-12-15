@@ -20,11 +20,9 @@ int main() {
 
     const tensor_t &train_images = xt::view(
             *dataset.features(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET), xt::all());
-//            *dataset.features(), xt::range(0, 5000), xt::all());
 
     const tensor_t &train_labels = xt::view(
             *dataset.labels(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET));
-//            *dataset.labels(), xt::range(0, 5000));
 
     // check
     std::cout << "Shape of train images: ";
@@ -83,13 +81,11 @@ int main() {
         const tensor_t &test_images = xt::view(
                 *dataset.features(),
                 xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
-    //            xt::range(0, 100),
                 xt::all()
         );
 
         const tensor_t &test_labels = xt::view(
                 *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
-    //              *dataset.labels(), xt::range(0, 100));
 
         // flatten and normalize train images
         const tensor_t &test_features = xt::reshape_view(ops::norm2d(test_images), {(int) test_images.shape()[0], 784, 1});

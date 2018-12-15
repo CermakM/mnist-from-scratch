@@ -66,7 +66,7 @@ namespace ops {
 
             auto max = [](const double &t) { return std::max<double>(0, t); };
 
-            std::transform(x.begin(), x.end(), ret.begin(), max);
+            std::transform(x.begin(), x.end(), ret.begin(), max);  // TODO: not tested, probably does not work
 
             return ret;
         }
@@ -106,7 +106,7 @@ namespace ops {
 
         tensor_t relu_(const tensor_t &x) {
 
-            return xt::where(x < 0, 0, 1);
+            return xt::where(x < 0, 0, 1) * x;  // TODO: not tested, probably does not work
         }
 
         tensor_t mse_(const tensor_t &z, const tensor_t &output, const tensor_t &target) {

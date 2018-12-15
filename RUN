@@ -4,26 +4,34 @@
 # TRAINING
 # ---
 
-export LOSS="categorical_cross_entropy"
+export CONTINUE_TRAINING=0
 
-export TRAIN_EPOCHS=3
+export LOSS="categorical_cross_entropy" 
+
+export TRAIN_EPOCHS=30
 export BATCH_SIZE=30
-export LEARNING_RATE=3.0
 
+export LEARNING_RATE=3.0
 export MOMENTUM_FACTOR=0.25
 
 export LOG_STEP_COUNT_STEPS=20000  # monitor thoroughly
-export SAVE_CHECKPOINT_STEP=60000  # once per epoch
+export VALIDATE_STEP_COUNT_EPOCHS=5
 
-### run training
+export SAVE_CHECKPOINT_STEP=60000  # once per epoch
+export KEEP_CHECKPOINTS_MAX=3
+
 ./mnist
 
+if [ $? -ne 0 ]; then
+	echo "Unexpected error occured during training\n"
+	exit 42
+fi
 
 # ---
 # EVALUATION && EXPORT
 # ---
+
 export SAVE_TRAIN_PREDICTIONS="trainPredictions"
 export SAVE_TEST_PREDICTIONS="actualTestPredictions"
 
-### run evaluation
 ./mnist-evaluate
