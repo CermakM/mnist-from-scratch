@@ -17,7 +17,7 @@
 #include <xtensor/xindex_view.hpp>
 #include <nlohmann/json.hpp>
 
-#define DEFAULT_MODEL_DIR  "export"
+#define DEFAULT_MODEL_DIR  "model"
 #define DEFAULT_MODEL_NAME "MNIST"
 
 using tensor_t = xt::xarray<double>;
