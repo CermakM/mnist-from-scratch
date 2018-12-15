@@ -81,6 +81,8 @@ namespace model {
               const std::function<tensor_t (const tensor_t&)> &activation = ops::funct::relu,
               ops::Initializer initializer = ops::Initializer::RANDOM_WEIGHT_INITIALIZER);
 
+        const auto& type() const {return this->_type; }
+
         const auto& name() const { return this->_name; }
         const auto& shape() const { return this->_weights.shape(); }
         const auto& size() const { return this->_size; }
@@ -88,7 +90,7 @@ namespace model {
         const auto& weights() const { return this->_weights; }
         const auto& bias() const { return this->_bias; }
 
-        tensor_t& activate(const tensor_t &x);
+        const tensor_t &activate(const tensor_t &x);
     };
 
     struct MNISTConfig {
@@ -99,7 +101,7 @@ namespace model {
         int batch_size = std::stoi(utils::getenv("BATCH_SIZE", "10"));
         int epochs = std::stoi(utils::getenv("EPOCHS", "30"));
 
-        std::string loss = utils::getenv("LOSS", "quadratic");  // xent training not implemented yet
+        std::string loss = utils::getenv("LOSS", "mse");  // cross-entropy training not implemented yet
 
         int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "30000"));
 

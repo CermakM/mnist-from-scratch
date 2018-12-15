@@ -4,7 +4,9 @@
 #include "model/model.h"
 
 
+
 int main() {
+
     std::cout << "Loading MNIST dataset... \n" << std::endl;
 
     // download dataset (if applicable)

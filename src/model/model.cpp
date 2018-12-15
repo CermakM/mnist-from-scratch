@@ -38,17 +38,19 @@ model::Layer::Layer(const size_t &size, const std::string &name,
     }
 }
 
-tensor_t& model::Layer::activate(const tensor_t &x) {
-
-    tensor_t ret ({x});
-
-    if (this->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
-
-        ret = (xt::linalg::dot(this->_weights, x) + this->_bias);
-    }
+const tensor_t &model::Layer::activate(const tensor_t &x) {
 
     // apply and store activations
-    this->_activation = this->_transfer_function(ret);
+    tensor_t z;
+
+    if (LayerType::INPUT_LAYER != _type) {
+        // we could perform identity by multiplying by diagonal matrix, but this is speeds up computation
+        z = xt::linalg::dot(this->_weights, x) + this->_bias;
+    } else {
+        z = x;
+    }
+
+    this->_activation = this->_transfer_function(z);
 
     // return reference to the activations
     return this->_activation;
@@ -66,6 +68,28 @@ model::MNISTModel::MNISTModel(model::MNISTConfig &config) {
 void model::MNISTModel::add(model::Layer* layer) {
 
     _layers.push_back(std::make_unique<Layer>(*layer));
+
+}
+
+void model::MNISTModel::set_loss(const std::string &loss) {
+
+    this->config.loss = loss;
+
+    if (loss == "categorical_cross_entropy") {
+
+        this->_loss_function = ops::loss::categorical_cross_entropy;
+        this->_loss_gradient = ops::diff::categorical_cross_entropy_;
+
+    } else {
+
+        this->_loss_function = ops::loss::mse;
+        this->_loss_gradient = ops::diff::mse_;
+    }
+}
+
+void model::MNISTModel::set_loss() {
+
+    this->set_loss(this->config.loss);
 
 }
 
@@ -90,7 +114,7 @@ model::MNISTModel& model::MNISTModel::compile() {
     _layers[0]->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // input default
 
     // hidden layers + output layer
-    for (int i = 1; i < (int) _layers.size(); i++) {
+    for (size_t i = 1; i < _layers.size(); i++) {
 
         auto&& layer = _layers[i];
 
@@ -118,6 +142,18 @@ model::MNISTModel& model::MNISTModel::compile(const model::MNISTConfig &build_co
     this->config = build_config;
 
     return this->compile();
+}
+
+tensor_t model::MNISTModel::forward(const tensor_t &x) {
+
+    tensor_t res = x;
+
+    for (const auto &layer : _layers) {
+
+        res = layer->activate(res);
+    }
+
+    return res;
 }
 
 model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor_t &labels) {
@@ -187,9 +223,7 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
             }  // EOF mini-batch
 
             // update weights accordingly
-            for (int i = 0; i < _layers.size() - 1; i++) {
-
-                size_t l = _layers.size() - 1 - i;
+            for (size_t l = 1; l < _layers.size(); l++) {
 
                 if (_layers[l]->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
@@ -199,11 +233,9 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                             (this->config.learning_rate / batch_size) * nabla_b[l]);
 
                 }
-
-            }  // EOF update weights
-
+            }
+            // EOF mini-batch
         }
-
         // EOF epoch
     }
 
@@ -212,66 +244,31 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
     return *this;
 }
 
-tensor_t model::MNISTModel::forward(const tensor_t &x) {
-
-    tensor_t res = x;
-
-    for (const auto &layer : _layers) {
-
-        res = layer->activate(res);
-
-    }
-
-    return res;
-}
-
-void model::MNISTModel::set_loss(const std::string &loss) {
-
-    this->config.loss = loss;
-
-    if (loss == "categorical_cross_entropy") {
-
-        this->_loss_function = ops::loss::categorical_cross_entropy;
-        this->_loss_gradient = ops::diff::categorical_cross_entropy_;
-
-    } else {
-
-        this->_loss_function = ops::loss::quadratic;
-        this->_loss_gradient = ops::diff::quadratic_;
-    }
-}
-
-void model::MNISTModel::set_loss() {
-
-    this->set_loss(this->config.loss);
-
-}
-
 void model::MNISTModel::back_prop(const tensor_t &output,
                                   const tensor_t &target,
-                                  std::vector<tensor_t>& nabla_w,
-                                  std::vector<tensor_t>& nabla_b) {
+                                  std::vector<tensor_t> &nabla_w,
+                                  std::vector<tensor_t> &nabla_b) {
 
     size_t L = _layers.size() - 1;
 
     tensor_t z;
     tensor_t delta;
 
+
     // proceed backwards to the rest of the layers
-    for (int i = 0; i < _layers.size() - 1; i++) {
+    for (size_t i = 0; i < L; i++) {
 
         size_t l = L - i;
 
         z = xt::linalg::dot(_layers[l]->_weights, _layers[l - 1]->_activation) + _layers[l]->_bias;
-
         if ( l < L) {
+            // compute gradient for other layers
             delta = (xt::linalg::dot(xt::transpose(_layers[l + 1]->_weights), delta) * _layers[l]->_transfer_gradient(z));
         } else {
-            // take the negative gradient of cost function to compute output error
+            // take the gradient of cost function to compute output error
             delta = _loss_gradient(z, output, target);
         }
 
-        // the gradient with respect to the weights
         nabla_w[l] += xt::linalg::dot(delta, xt::transpose(_layers[l-1]->_activation));
         nabla_b[l] += delta;
     }
@@ -527,7 +524,14 @@ std::ostream &operator<<(std::ostream &os, const model::Layer &obj) {
         os << "Layer" << std::endl;
         os << "\tname: " << obj.name() << std::endl;
         os << "\tsize: " << obj.size() << std::endl;
-        os << "\tshape: "; utils::vprint(os, obj.shape());
+
+        if (obj.type() == model::LayerType::INPUT_LAYER){
+            os << "\tshape: "; utils::vprint(os, std::vector<size_t>{obj.size(), 1});
+        } else {
+            os << "\tshape: "; utils::vprint(os, obj.shape());
+        }
+
+        return os;
 }
 
 std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {

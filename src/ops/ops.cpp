@@ -8,14 +8,14 @@ namespace ops {
 
     xt::xarray<size_t> one_hot_encode(const tensor_t &tensor, const size_t &n_classes) {
 
-        auto tensor_flat = xt::flatten(tensor);
+        tensor_t tensor_flat = xt::flatten(tensor);
 
         std::vector<size_t> shape ({tensor.shape()[0], n_classes, 1});
         xt::xarray<size_t> encoded_tensor = xt::zeros<size_t> (shape);
 
-        for (int i = 0; i < tensor.size(); i++) {
+        for (size_t i = 0; i < tensor.size(); i++) {
 
-            xt::view(encoded_tensor, i, (size_t) tensor_flat[i]) = 1;
+            xt::view(encoded_tensor, i, tensor_flat[i]) = 1;
         }
 
         return encoded_tensor;
@@ -24,7 +24,7 @@ namespace ops {
 
     tensor_t identity(const tensor_t &x) {
 
-        return tensor_t ({x});  // return copy
+        return tensor_t({x});
     }
 
     tensor_t softmax(const tensor_t &x) {
@@ -35,6 +35,8 @@ namespace ops {
     }
 
     tensor_t norm2d(const tensor_t &x) {
+
+        // TODO: maybe we can modify the x directly instead of returning the copy?
 
         // get the min and max
         auto minmax =  std::minmax_element(x.begin(), x.end());
@@ -84,7 +86,7 @@ namespace ops {
             return -xt::sum(logits);
         }
 
-        tensor_t quadratic(const tensor_t &output, const tensor_t &target) {
+        tensor_t mse(const tensor_t &output, const tensor_t &target) {
 
             xt::check_dimension(output.shape(), target.shape());
 
@@ -97,7 +99,7 @@ namespace ops {
 
         tensor_t sigmoid_(const tensor_t &x) {
 
-            auto sigma = ops::funct::sigmoid(x);
+            tensor_t sigma = ops::funct::sigmoid(x);
 
             return sigma * (1 - sigma);
         }
@@ -107,7 +109,7 @@ namespace ops {
             return xt::where(x < 0, 0, 1);
         }
 
-        tensor_t quadratic_(const tensor_t &z, const tensor_t &output, const tensor_t &target) {
+        tensor_t mse_(const tensor_t &z, const tensor_t &output, const tensor_t &target) {
 
             return ((output - target) * ops::diff::sigmoid_(z));
         }

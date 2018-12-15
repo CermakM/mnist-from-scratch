@@ -62,14 +62,14 @@ namespace ops {
         tensor_t relu_(const tensor_t &x);
 
         tensor_t categorical_cross_entropy_(const tensor_t &z, const tensor_t &activation, const tensor_t &target);
-        tensor_t quadratic_(const tensor_t &z, const tensor_t &activation, const tensor_t &target);
+        tensor_t mse_(const tensor_t &z, const tensor_t &activation, const tensor_t &target);
 
     }
 
     namespace loss {
 
         tensor_t categorical_cross_entropy(const tensor_t &output, const tensor_t &target);
-        tensor_t quadratic(const tensor_t &output, const tensor_t &target);
+        tensor_t mse(const tensor_t &output, const tensor_t &target);
 
     }
 }
