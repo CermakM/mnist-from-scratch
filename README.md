@@ -34,10 +34,12 @@ Also, there should have been two links called `mnist` and `mnist-evaluate`. The 
 Most training parameters can be customized via environment variables. I recommend checking the source code of [model.h](src/model/model.h) header file for most of them.
 
 Some of the parameters include:
-- `LEARNING_RATE` = 3.0
-- `EPOCHS` = 30
-- `BATCH_SIZE` = 10
-- `LOSS` = "quadratic"
+- `LEARNING_RATE=3.0`
+- `EPOCHS=30`
+- `BATCH_SIZE=10`
+- `LOSS="mse"`
+
+> You can also set `LOSS` to "categorical_cross_entropy"`, the performance is similar (altho "mse" appears to be slightly better, it might be the case of hyper param tuning) in the long run, however x-entropy seems to converge faster (strikes better performance earlier). In case of cross entropy, I also recommend setting higher `BATCH_SIZE`. Something like `30` should do.
 
 and some additional logging parameters
 - `LOG_STEP_COUNT_STEPS` = 30000
@@ -65,10 +67,12 @@ With the default setting, the model should read over `95% accuracy`. That's not 
 
 ---
 
-### Final words
+### Final words and *Thank Yous*
 My greatest thanks goes to the [QuantStack](https://github.com/QuantStack) project for their work on xtensors and their incredible support which I needed quite often during creation of this project.
 
 Some parts of backpropagation algorithm were inspired by the great blog [Neural Networks and Deep Learning](http://neuralnetworksanddeeplearning.com/index.html) by Michael Nielsen. The blog has been invaluable to me, thank you very much for this!
+
+An awesome explanation of cross entropy and softmax along with their derivatives was provided by [Sefik Ilkin Serengil](https://github.com/serengil)in [this blog](https://sefiks.com/2017/12/17/a-gentle-introduction-to-cross-entropy-loss-function/)
 
 ---
 
