@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# ---
+# TRAINING
+# ---
+
+export LOSS="categorical_cross_entropy"
+
+export EPOCHS=30
+export BATCH_SIZE=30
+export LEARNING_RATE=3.0
+
+export LOG_STEP_COUNT_STEPS=10000  # monitor thoroughly
+export SAVE_CHECKPOINT_STEP=60000  # once per epoch
+
+### run training
+./mnist
+
+
+# ---
+# EVALUATION && EXPORT
+# ---
+export SAVE_TRAIN_PREDICTIONS="trainPredictions"
+export SAVE_TEST_PREDICTIONS="actualTestPredictions"
+
+### run evaluation
+./mnist-evaluate
