@@ -391,7 +391,24 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
     if (!fs::exists(model_dir))
         fs::create_directory(model_dir);
 
-    // checkpoint
+    // checkpointing
+    // list checkpoints in the directory and delete the latest (if applicable)
+    fs::path oldest_checkpoint;
+    int n_checkpoints = 0;
+    for (fs::directory_iterator it(model_dir); it != fs::directory_iterator(); it++) {
+        fs::path f_name = it->path().filename();
+
+        if (!n_checkpoints)
+            oldest_checkpoint = f_name;
+        else
+            oldest_checkpoint = std::min(oldest_checkpoint, f_name);
+
+        n_checkpoints++;
+    }
+    // remove oldes checkpoint (if applicable)
+    if (n_checkpoints > config.keep_checkpoint_max)
+        fs::remove(oldest_checkpoint);
+
     write_json((model_dir / (model_name + "." + std::to_string(timestamp) + ".checkpoint")).c_str(), root);
 
     // final model
@@ -463,22 +480,12 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
 model::Score::Score(const tensor_t &labels,
                     const tensor_t &predictions,
                     const double& p) {
-    std::cout << "Creating score" << std::endl;
-
-    utils::print_shape(labels);
-    utils::print_shape(predictions);
 
     std::ignore = p; // ignore for now
 
-    auto y_equal = xt::equal(predictions, labels);
+    auto y_equal = xt::equal(labels, predictions);
 
     this->total = labels.shape()[0];
-
-    std::cout << y_equal << std::endl;
-    utils::print_shape(y_equal);
-
-    std::cout << xt::sum(y_equal) << std::endl;
-
     this->correct = xt::sum(y_equal)[0];
 
     this->accuracy  = ((double) correct / (double) total);

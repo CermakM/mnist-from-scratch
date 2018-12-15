@@ -99,7 +99,9 @@ namespace model {
         std::string loss = utils::getenv("LOSS", "quadratic");  // xent training not implemented yet
 
         int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "30000"));
+
         int save_checkpoint_step = 60000;  // explicit, maybe allow modifying it later, but here it will equal to one epoch
+        int keep_checkpoint_max = std::stoi(utils::getenv("KEEP_CHECKPOINTS_MAX", "10"));  // how many checkpoints to keep
     };
 
     class MNISTModel {

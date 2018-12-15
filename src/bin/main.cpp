@@ -14,15 +14,15 @@ int main() {
 
     // load dataset
 
-    auto dataset = images::mnist::load_dataset();
+    images::mnist::MNISTDataset dataset = images::mnist::load_dataset();
 
-    auto train_images = xt::view(
+    auto&& train_images = xt::view(
             *dataset.features(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET), xt::all());
-//            *dataset.features(), xt::range(0, 500), xt::all());
+//            *dataset.features(), xt::range(0, 5000), xt::all());
 
-    auto train_labels = xt::view(
+    auto&& train_labels = xt::view(
             *dataset.labels(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET));
-//            *dataset.labels(), xt::range(0, 500));
+//            *dataset.labels(), xt::range(0, 5000));
 
     // check
     std::cout << "Shape of train images: ";
@@ -35,7 +35,7 @@ int main() {
 
     model::MNISTModel model;
 
-    if (utils::getenv("CONTINUE_TRAINING", "")) {
+    if (std::stoi(utils::getenv("CONTINUE_TRAINING", "0"))) {
         namespace fs = boost::filesystem;
 
         fs::path model_dir = utils::getenv("MODEL_DIR", DEFAULT_MODEL_DIR);
@@ -45,19 +45,13 @@ int main() {
         if (!fs::exists(model_path))
             std::cerr << "Model has not been found: path " << model_path << " does not exist." << std::endl;
         else
+            std::cout << "Using pre-trained model. Continuing training." << std::endl;
             model = model::MNISTModel::load_model(model_dir, model_name);
     }
 
     if (!model.is_built()) {
 
-        model::MNISTConfig config;
-
-        config.learning_rate = 3.0;
-        config.batch_size = 10;
-        config.epochs = 30;
-        config.loss = "quadratic";
-
-        config.log_step_count_steps = 10000;
+        model::MNISTConfig config;  // load default config
 
         std::cout << config << std::endl;
 
@@ -73,10 +67,10 @@ int main() {
     std::cout << model << std::endl;
 
     // flatten and normalize train images
-    auto features = xt::reshape_view(ops::norm2d(train_images), {(int) train_images.shape()[0], 784, 1});
+    auto&& features = xt::reshape_view(ops::norm2d(train_images), {(int) train_images.shape()[0], 784, 1});
 
     // apply one hot encoding to train labels
-    auto labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
+    auto&& labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
 
     // fit the model
     model.fit(features, labels);
@@ -84,22 +78,22 @@ int main() {
     if (std::stoi(utils::getenv("EVALUATE", "0"))) {
 
         // score the model
-        auto test_images = xt::view(
+        auto&& test_images = xt::view(
                 *dataset.features(),
                 xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
     //            xt::range(0, 100),
                 xt::all()
         );
 
-        auto test_labels = xt::view(
+        auto&& test_labels = xt::view(
                 *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
     //              *dataset.labels(), xt::range(0, 100));
 
         // flatten and normalize train images
-        auto test_features = xt::reshape_view(test_images, {(int) test_images.shape()[0], 784, 1});
+        auto&& test_features = xt::reshape_view(ops::norm2d(test_images), {(int) test_images.shape()[0], 784, 1});
 
         model::Score score = model.evaluate(
-                ops::norm2d(test_features),
+                test_features,
                 test_labels  // do not one-hot encode
         );
 
