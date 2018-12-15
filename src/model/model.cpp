@@ -87,12 +87,12 @@ model::MNISTModel& model::MNISTModel::compile() {
 
     // input layer
     _layers[0]->_type = LayerType::INPUT_LAYER;
-    _layers[0]->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // correct default
+    _layers[0]->_initializer = ops::Initializer::FROZEN_WEIGHTS;  // input default
 
     // hidden layers + output layer
-    for (int i = 1; i < _layers.size(); i++) {
+    for (int i = 1; i < (int) _layers.size(); i++) {
 
-        auto &layer = _layers[i];
+        auto&& layer = _layers[i];
 
         if (layer->_initializer == ops::Initializer::RANDOM_WEIGHT_INITIALIZER) {
 
@@ -162,7 +162,7 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &features, const tensor
                 // Monitor Loss
                 if (!(step % this->config.log_step_count_steps)) {
 
-                    auto total_loss = this->compute_total_loss(features, labels, (size_t) batch_size);
+                    const tensor_t &total_loss = this->compute_total_loss(features, labels, (size_t) batch_size);
 
                     std::cout << "Epoch: " << epoch << std::endl;
                     std::cout << "Step:  " << step << std::endl;
@@ -373,7 +373,7 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
         layer_node.put("weights", weights_json);
         layer_node.put("bias", bias_json);
 
-        layer_node.put("activation", "TODO"); // TODO: pass mapping to the activation
+        layer_node.put("activation", "sigmoid"); // TODO: pass mapping to the activation
 
         layer_list.push_back(std::make_pair("", layer_node));
     }
@@ -407,7 +407,7 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
     }
     // remove oldes checkpoint (if applicable)
     if (n_checkpoints > config.keep_checkpoint_max)
-        fs::remove(oldest_checkpoint);
+        fs::remove(model_dir / oldest_checkpoint);
 
     write_json((model_dir / (model_name + "." + std::to_string(timestamp) + ".checkpoint")).c_str(), root);
 
@@ -522,6 +522,14 @@ std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
 }
 
 
+std::ostream &operator<<(std::ostream &os, const model::Layer &obj) {
+
+        os << "Layer" << std::endl;
+        os << "\tname: " << obj.name() << std::endl;
+        os << "\tsize: " << obj.size() << std::endl;
+        os << "\tshape: "; utils::vprint(os, obj.shape());
+}
+
 std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
 
     if (!obj.is_built()) {
@@ -534,10 +542,7 @@ std::ostream &operator<<(std::ostream &os, const model::MNISTModel &obj) {
 
     for (auto& layer : obj.layers()) {
 
-        os << "Layer" << std::endl;
-        os << "\tname: " << layer->name() << std::endl;
-        os << "\tsize: " << layer->size() << std::endl;
-        os << "\tshape: "; utils::vprint(os, layer->shape());
+        os << *layer.get() << std::endl;
     }
 
     return os;

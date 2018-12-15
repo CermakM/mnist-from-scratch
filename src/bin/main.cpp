@@ -16,11 +16,11 @@ int main() {
 
     images::mnist::MNISTDataset dataset = images::mnist::load_dataset();
 
-    auto&& train_images = xt::view(
+    const tensor_t &train_images = xt::view(
             *dataset.features(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET), xt::all());
 //            *dataset.features(), xt::range(0, 5000), xt::all());
 
-    auto&& train_labels = xt::view(
+    const tensor_t &train_labels = xt::view(
             *dataset.labels(), xt::range(0, images::mnist::SIZEOF_TRAIN_DATASET));
 //            *dataset.labels(), xt::range(0, 5000));
 
@@ -67,10 +67,10 @@ int main() {
     std::cout << model << std::endl;
 
     // flatten and normalize train images
-    auto&& features = xt::reshape_view(ops::norm2d(train_images), {(int) train_images.shape()[0], 784, 1});
+    const tensor_t &features = xt::reshape_view(ops::norm2d(train_images), {(int) train_images.shape()[0], 784, 1});
 
     // apply one hot encoding to train labels
-    auto&& labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
+    const tensor_t &labels = ops::one_hot_encode(train_labels, MNIST_N_CLASSES);
 
     // fit the model
     model.fit(features, labels);
@@ -78,19 +78,19 @@ int main() {
     if (std::stoi(utils::getenv("EVALUATE", "0"))) {
 
         // score the model
-        auto&& test_images = xt::view(
+        const tensor_t &test_images = xt::view(
                 *dataset.features(),
                 xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_),
     //            xt::range(0, 100),
                 xt::all()
         );
 
-        auto&& test_labels = xt::view(
+        const tensor_t &test_labels = xt::view(
                 *dataset.labels(), xt::range(images::mnist::SIZEOF_TRAIN_DATASET, xt::placeholders::_));
     //              *dataset.labels(), xt::range(0, 100));
 
         // flatten and normalize train images
-        auto&& test_features = xt::reshape_view(ops::norm2d(test_images), {(int) test_images.shape()[0], 784, 1});
+        const tensor_t &test_features = xt::reshape_view(ops::norm2d(test_images), {(int) test_images.shape()[0], 784, 1});
 
         model::Score score = model.evaluate(
                 test_features,
