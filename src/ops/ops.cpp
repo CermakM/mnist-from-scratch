@@ -119,8 +119,7 @@ namespace ops {
             // unused
             std::ignore = z;
 
-            // TODO: derivative of softmax ??
-            return (output - target);  // includes derivative of sigmoid
+            return (output - target);  // includes derivative of softmax
         }
     }
 }

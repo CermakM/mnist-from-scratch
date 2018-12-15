@@ -164,7 +164,8 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &X, const tensor_t &y) 
 
     const int &batch_size = config.batch_size;
 
-    int step = 0;
+    const double &alpha = this->config.learning_rate;
+    const double &beta = this->config.momentum_factor;
 
     const double &tol = this->config.tol;  // error tolerance -- stop condition
 
@@ -172,27 +173,35 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &X, const tensor_t &y) 
 
     // gradient vectors
     std::vector<tensor_t> nabla_w, nabla_b;
+    std::vector<tensor_t> d_w, d_b;  // previous updates (for the momentum)
 
     // initialize gradient vectors for the current batch
     for (const auto& layer: _layers) {
 
         nabla_w.emplace_back(xt::zeros<double>(layer->_weights.shape()));
         nabla_b.emplace_back(xt::zeros<double>(layer->_bias.shape()));
+
+        d_w.push_back(nabla_w.back());
+        d_b.push_back(nabla_b.back());
     }
 
     // train epochs
-    for (int epoch = 1; epoch < this->config.epochs + 1; epoch++) {
+    int step = 0;
+    for (int epoch = 1; epoch < this->config.train_epochs + 1; epoch++) {
 
         // set seed to preserve order for both X and y
         xt::random::seed(epoch);
         xt::random::shuffle(shuffle_indices);
-
 
         // iterate over mini-batches in the training set
         for (int batch = 0; batch < X.shape()[0] - batch_size; batch += batch_size) {            // mini-batch update
 
             // set to zero for each mini batch
             for (size_t l = 0; l < _layers.size(); l++) {
+
+                d_w[l] = nabla_w[l];
+                d_b[l] = nabla_b[l];
+
                 std::fill(nabla_w[l].begin(), nabla_w[l].end(), 0);
                 std::fill(nabla_b[l].begin(), nabla_b[l].end(), 0);
             }
@@ -237,11 +246,11 @@ model::MNISTModel& model::MNISTModel::fit(const tensor_t &X, const tensor_t &y) 
 
                 if (_layers[l]->_initializer != ops::Initializer::FROZEN_WEIGHTS) {
 
-                    _layers[l]->_weights -= (
-                            (this->config.learning_rate / batch_size) * nabla_w[l]);
-                    _layers[l]->_bias  -= (
-                            (this->config.learning_rate / batch_size) * nabla_b[l]);
+                    nabla_w[l] = nabla_w[l] * ((1-beta) / batch_size) + (beta * d_w[l]);
+                    nabla_b[l] = nabla_b[l] * ((1-beta) / batch_size) + (beta * d_b[l]);
 
+                    _layers[l]->_weights -= (alpha * nabla_w[l]);
+                    _layers[l]->_bias    -= (alpha * nabla_b[l]);
                 }
             }
             // EOF mini-batch
@@ -356,11 +365,14 @@ void model::MNISTModel::export_model(const boost::filesystem::path model_dir,
     // export config
     pt::ptree config_node;
     config_node.put("learning_rate", config.learning_rate);
+    config_node.put("momentum_factor", config.momentum_factor);
     config_node.put("tol", config.tol);
     config_node.put("batch_size", config.batch_size);
-    config_node.put("epochs", config.epochs);
+    config_node.put("train_epochs", config.train_epochs);
     config_node.put("loss", config.loss);
     config_node.put("log_step_count_steps", config.log_step_count_steps);
+    config_node.put("save_checkpoint_step", config.save_checkpoint_step);
+    config_node.put("keep_checkpoint_max", config.keep_checkpoint_max);
 
     root.add_child("config", config_node);
 
@@ -441,11 +453,14 @@ model::MNISTModel model::MNISTModel::load_model(const boost::filesystem::path mo
     // load config
     MNISTConfig config {
         config_spec.get<double>("learning_rate"),
+        config_spec.get<double>("momentum_factor", config.momentum_factor),
         config_spec.get<double>("tol"),
         config_spec.get<int>("batch_size"),
-        config_spec.get<int>("epochs"),
+        config_spec.get<int>("train_epochs"),
         config_spec.get<std::string>("loss"),
-        config_spec.get<int>("log_step_count_steps")
+        config_spec.get<int>("log_step_count_steps"),
+        config_spec.get<int>("save_checkpoint_step"),
+        config_spec.get<int>("keep_checkpoint_max")
     };
 
     MNISTModel model (config);
@@ -519,7 +534,7 @@ std::ostream& operator<<(std::ostream& os, const model::MNISTConfig& obj) {
     auto out = boost::format(fmt)
                % obj.batch_size
                % obj.learning_rate
-               % obj.epochs
+               % obj.train_epochs
                % obj.loss;
 
     os << boost::str(out) << std::endl;

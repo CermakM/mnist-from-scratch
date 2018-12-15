@@ -35,7 +35,7 @@ Most training parameters can be customized via environment variables. I recommen
 
 Some of the parameters include:
 - `LEARNING_RATE=3.0`
-- `EPOCHS=30`
+- `TRAIN_EPOCHS=30`
 - `BATCH_SIZE=10`
 - `LOSS="mse"`
 

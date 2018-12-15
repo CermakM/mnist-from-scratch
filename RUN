@@ -6,11 +6,13 @@
 
 export LOSS="categorical_cross_entropy"
 
-export EPOCHS=30
+export TRAIN_EPOCHS=3
 export BATCH_SIZE=30
 export LEARNING_RATE=3.0
 
-export LOG_STEP_COUNT_STEPS=10000  # monitor thoroughly
+export MOMENTUM_FACTOR=0.25
+
+export LOG_STEP_COUNT_STEPS=20000  # monitor thoroughly
 export SAVE_CHECKPOINT_STEP=60000  # once per epoch
 
 ### run training

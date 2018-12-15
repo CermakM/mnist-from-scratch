@@ -96,16 +96,18 @@ namespace model {
     struct MNISTConfig {
 
         double learning_rate = std::stod(utils::getenv("LEARNING_RATE", "3.0"));
+        double momentum_factor =  std::stod(utils::getenv("MOMENTUM_FACTOR", "0.5"));
+
         double tol = 1e-3;
 
         int batch_size = std::stoi(utils::getenv("BATCH_SIZE", "10"));
-        int epochs = std::stoi(utils::getenv("EPOCHS", "30"));
+        int train_epochs = std::stoi(utils::getenv("TRAIN_EPOCHS", "30"));
 
-        std::string loss = utils::getenv("LOSS", "mse");  // cross-entropy training not implemented yet
+        std::string loss = utils::getenv("LOSS", "mse");  // set LOSS="categorical_cross_entropy" for xent loss
 
-        int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "30000"));
+        int log_step_count_steps = std::stoi(utils::getenv("LOG_STEP_COUNT_STEPS", "15000"));
 
-        int save_checkpoint_step = 60000;  // explicit, maybe allow modifying it later, but here it will equal to one epoch
+        int save_checkpoint_step = std::stoi(utils::getenv("SAVE_CHECKPOINT_STEP", "60000"));
         int keep_checkpoint_max = std::stoi(utils::getenv("KEEP_CHECKPOINTS_MAX", "5"));  // how many checkpoints to keep
     };
 
