@@ -36,7 +36,7 @@ Most training parameters can be customized via environment variables. I recommen
 Some of the parameters include:
 - `LEARNING_RATE` = 3.0
 - `EPOCHS` = 30
-- `BATCHS_SIZE` = 10
+- `BATCH_SIZE` = 10
 - `LOSS` = "quadratic"
 
 and some additional logging parameters
@@ -52,6 +52,8 @@ To run the training script, execute from the project root:
 
 ## Evaluation
 Evaluation happens after the training, but it is still possible to run evaluation on a pre-trained model, which should have been exported into the `export/` dir after the training along with its checkpoints.
+
+With the default setting, the model should read over `95% accuracy`. That's not exactly state of the art, but it is quite impressive considering the simplicity of the model.
 
 ```bash
 ./mnist-evaluate
