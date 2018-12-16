@@ -143,9 +143,11 @@ std::vector<T> images::mnist::read_data_file(const std::string &fpath, const siz
     in_file.read(reinterpret_cast<char*> (&magic_number), sizeof(magic_number));
     in_file.read(reinterpret_cast<char*> (&n_images), sizeof(n_images));
 
+    #ifdef LITTLE_ENDIAN
     // swap endianity
     magic_number = __bswap_32(magic_number);
     n_images = __bswap_32(n_images);
+    #endif
 
     if (magic_number != 2049 && magic_number != 2051) {
         throw std::runtime_error("Magic number values do not match.");
