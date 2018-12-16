@@ -2,6 +2,12 @@
 
 export LD_LIBRARY_PATH="${CONDA_PREFIX}/lib:$LD_LIBRARY_PATH"
 
+# AISA specific
+
+module add gcc-7.2
+module add cmake-3.6.2
+module add conda-4.5.11
+
 # ---
 # COMPILATION
 # ---
