@@ -6,11 +6,11 @@
 
 tput bold; tput setaf 2; echo -e "\nConfiguration\n"; tput sgr0;
 
-cmake . -DCMAKE_BUILD_TYPE=Release
+cmake .
 
 tput bold; tput setaf 2; echo -e "\nBuild.\n"; tput sgr0;
 
-cmake --buld . --target all
+cmake --build . --target all
 
 
 # ---
