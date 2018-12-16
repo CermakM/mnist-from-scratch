@@ -25,8 +25,8 @@ All of which are open sourced, well maintained and well document.
 Run the following build command from the project root dir:
 
 ```bash
-cmake .  # to configure
-cmake --build . --target all
+cmake -DCMAKE_BUILD_TYPE=Release .  # to configure
+cmake --build . --target all -- -j 4
 ```
 
 ## Training
@@ -66,7 +66,7 @@ With the default setting, the model should read over `95% accuracy`. That's not 
 ./mnist-evaluate
 ```
 
-> __UPDATE:__ There have been recently added `RUN` script, which allows to set environment easily and runs the training and evaluation.
+> __UPDATE:__ There has been recently added RUN script, which builds the project automatically and allows to set environment easily and runs the training and evaluation.
 
 ## Prediction
 
