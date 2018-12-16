@@ -16,11 +16,16 @@ Building should be pretty straightforward, given all dependencies are present on
 - [xtensor](https://github.com/QuantStack/xtensor)
 - [xtensor-blas](https://github.com/QuantStack/xtensor-blas)
 
+It is best to install them via [conda](https://github.com/conda/conda).
+
+> Do not forget to set (if not already) your `CONDA_PREFIX` environment variable to the path where your conda is installed (usually this will be set automatically after conda installation, e.g. `$HOME/anaconda3` or `$HOME/miniconda3`), `cmake` will look for it.
+
 All of which are open sourced, well maintained and well document.
 
 Run the following build command from the project root dir:
 
 ```bash
+cmake .  # to configure
 cmake --build . --target all
 ```
 
@@ -60,6 +65,8 @@ With the default setting, the model should read over `95% accuracy`. That's not 
 ```bash
 ./mnist-evaluate
 ```
+
+> __UPDATE:__ There have been recently added `RUN` script, which allows to set environment easily and runs the training and evaluation.
 
 ## Prediction
 

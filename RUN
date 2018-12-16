@@ -1,8 +1,24 @@
 #!/bin/bash
 
 # ---
+# COMPILATION
+# ---
+
+tput setaf 2; echo "Configuring"; tput sgr0;
+
+cmake . -DCMAKE_BUILD_TYPE=Release
+
+tput setaf 2; echo "Building from source"; tput sgr0;
+
+cmake --buld . --target all
+
+
+# ---
 # TRAINING
 # ---
+
+tput setaf 2; echo "Training"; tput sgr0;
+
 
 export CONTINUE_TRAINING=0
 
@@ -23,13 +39,16 @@ export KEEP_CHECKPOINTS_MAX=3
 ./mnist
 
 if [ $? -ne 0 ]; then
-	echo "Unexpected error occured during training\n"
+	tput setaf 1; echo "Unexpected error occured during training."; tput sgr0;
 	exit 42
 fi
+
 
 # ---
 # EVALUATION && EXPORT
 # ---
+
+tput setaf 2; echo "Evaluation"; tput sgr0;
 
 export SAVE_TRAIN_PREDICTIONS="trainPredictions"
 export SAVE_TEST_PREDICTIONS="actualTestPredictions"

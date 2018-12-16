@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.6)
 
 # Boost
 
@@ -21,6 +21,9 @@ endif()
 
 
 link_directories(SYSTEM "/usr/lib64/")  # libcblas
+link_directories(SYSTEM "${ANACONDA_PATH}/lib")  # libcblas
+
+find_library(CBLAS NAMES cblas libcblas)  # libcblas
 
 set(EXTRA_LIBS ${EXTRA_LIBS} dataset model cblas)
 
